@@ -1,22 +1,26 @@
 #pragma once
-#include <entt/entt.hpp>
-#include <SFML/Graphics.hpp>
 #include "../core/Components.hpp"
 #include "../map/Map.hpp"
+#include <SFML/Graphics.hpp>
+#include <entt/entt.hpp>
 
 class RenderSystem {
 public:
-    RenderSystem(sf::RenderWindow& window);
-    bool loadFont(const std::string& path);
+  RenderSystem(sf::RenderWindow &window);
+  bool loadFont(const std::string &path);
 
-    void drawMap(const Map& map);
-    void drawEntities(entt::registry& registry);
-    void drawHUD(int score, int lives, bool powered);
-    void drawMessage(const std::string& msg);
+  void drawMap(const Map &map);
+  void drawEntities(entt::registry &registry);
+  void drawHUD(int score, int lives, bool powered);
+  void drawStartScreen(int HighScore);
+  void drawGameOver(int score, int HighScore);
+  void drawWinScreen(int score, int HighScore);
 
 private:
-    sf::RenderWindow& window;
-    sf::Font font;
+  sf::RenderWindow &window;
+  sf::Font font;
 
-    sf::String getWallChar(const Map& map, int row, int col) const;
+  sf::String getWallChar(const Map &map, int row, int col) const;
+  void drawCenteredText(const sf::String &str, unsigned int size,
+                        sf::Color color, float yOffset);
 };

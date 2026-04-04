@@ -5,7 +5,7 @@
 #include <SFML/Graphics.hpp>
 #include <entt/entt.hpp>
 
-enum class GameStatus { Playing, Dead, Respawn, GameOver, Win };
+enum class GameStatus { StartScreen, Playing, Dead, Respawn, GameOver, Win };
 
 class Game {
 public:
@@ -13,11 +13,14 @@ public:
 
   void handleInput(sf::Keyboard::Key key, bool pressed);
   void update(float dt);
+  void reset();
 
   entt::registry &getRegistry() { return registry; }
   const Map &getMap() const { return map; }
+  Map &getMapMut() { return map; }
   int getScore() const { return score; }
   int getLives() const { return lives; }
+  int getHighScore() const { return highScore; }
   GameStatus getStatus() const { return status; }
   void addScore(int points) { score += points; }
 
@@ -26,11 +29,14 @@ private:
   Map map;
   int score = 0;
   int lives = 3;
-  GameStatus status = GameStatus::Playing;
+  int highScore = 0;
+  GameStatus status = GameStatus::StartScreen;
   float respawnTimer = 0.f;
 
   void initEntities();
   void spawnPacman();
   void spawnGhosts();
   void spawnDots();
+  void saveHighScore();
+  void loadHighScore();
 };

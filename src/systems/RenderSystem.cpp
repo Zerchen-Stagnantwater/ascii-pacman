@@ -50,6 +50,16 @@ sf::String RenderSystem::getWallChar(const Map &map, int r, int c) const {
   }
 }
 
+void RenderSystem::drawCenteredText(const sf::String &str, unsigned int size,
+                                    sf::Color color, float yOffset) {
+  sf::Text t(font, str, size);
+  t.setFillColor(color);
+  auto bounds = t.getLocalBounds();
+  t.setPosition(sf::Vector2f(Config::WINDOW_W / 2.f - bounds.size.x / 2.f,
+                             Config::WINDOW_H / 2.f + yOffset));
+  window.draw(t);
+}
+
 void RenderSystem::drawMap(const Map &map) {
   for (int r = 0; r < Map::ROWS; r++) {
     for (int c = 0; c < Map::COLS; c++) {
@@ -97,11 +107,31 @@ void RenderSystem::drawHUD(int score, int lives, bool powered) {
       sf::Vector2f(Config::WINDOW_W - (3 * Config::CELL_SIZE) - 4, 4));
   window.draw(heartTxt);
 }
+void RenderSystem::drawStartScreen(int highScore) {
+  drawCenteredText(sf::String(L"ASCII PACMAN"), 32, sf::Color::Yellow, -80.f);
+  drawCenteredText(sf::String(L"High Score: " + std::to_wstring(highScore)), 18,
+                   sf::Color::White, -30.f);
+  drawCenteredText(sf::String(L"Press ENTER to start"), 18, sf::Color::Cyan,
+                   20.f);
+  drawCenteredText(sf::String(L"Arrow keys to move"), 14,
+                   sf::Color(150, 150, 150), 60.f);
+}
 
-void RenderSystem::drawMessage(const std::string &msg) {
-  sf::Text t(font, msg, 24);
-  t.setFillColor(sf::Color::Yellow);
-  t.setPosition(
-      sf::Vector2f(Config::WINDOW_W / 2.f - 80, Config::WINDOW_H / 2.f));
-  window.draw(t);
+void RenderSystem::drawGameOver(int score, int highScore) {
+  drawCenteredText(sf::String(L"GAME OVER"), 32, sf::Color::Red, -80.f);
+  drawCenteredText(sf::String(L"Score: " + std::to_wstring(score)), 20,
+                   sf::Color::White, -30.f);
+  drawCenteredText(sf::String(L"High Score: " + std::to_wstring(highScore)), 18,
+                   sf::Color::Yellow, 10.f);
+  drawCenteredText(sf::String(L"Press R to retry"), 18, sf::Color::Cyan, 60.f);
+}
+
+void RenderSystem::drawWinScreen(int score, int highScore) {
+  drawCenteredText(sf::String(L"YOU WIN!"), 32, sf::Color::Yellow, -80.f);
+  drawCenteredText(sf::String(L"Score: " + std::to_wstring(score)), 20,
+                   sf::Color::White, -30.f);
+  drawCenteredText(sf::String(L"High Score: " + std::to_wstring(highScore)), 18,
+                   sf::Color::Yellow, 10.f);
+  drawCenteredText(sf::String(L"Press R to play again"), 18, sf::Color::Cyan,
+                   60.f);
 }

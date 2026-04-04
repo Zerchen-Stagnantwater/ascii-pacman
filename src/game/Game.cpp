@@ -1,9 +1,44 @@
 #include "Game.hpp"
 #include "../core/Constants.hpp"
 #include "../map/MapLoader.hpp"
+#include <SFML/Window/Keyboard.hpp>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 Game::Game() {
+  loadHighScore();
   map.load(MapLoader::classic());
+  initEntities();
+}
+
+void Game::loadHighScore() {
+  std::ifstream f(Config::SAVE_PATH);
+  if (!f.is_open())
+    return;
+  try {
+    json j;
+    f >> j;
+    highScore = j.value("highScore", 0);
+  } catch (...) {
+  }
+}
+
+void Game::saveHighScore() {
+  json j;
+  j["highScore"] = highScore;
+  std::ofstream f(Config::SAVE_PATH);
+  f << j.dump(2);
+}
+
+void Game::reset() {
+  registry.clear();
+  map.load(MapLoader::classic());
+  score = 0;
+  lives = 3;
+  status = GameStatus::Playing;
+  respawnTimer = 0.f;
   initEntities();
 }
 
@@ -75,6 +110,18 @@ void Game::spawnDots() {
 void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
   if (!pressed)
     return;
+  if (status == GameStatus::StartScreen) {
+    if (key == sf::Keyboard::Key::Enter)
+      reset();
+    return;
+  }
+
+  if (status == GameStatus::GameOver || status == GameStatus::Win) {
+    if (key == sf::Keyboard::Key::R)
+      reset();
+    return;
+  }
+
   if (status != GameStatus::Playing)
     return;
 
@@ -94,9 +141,10 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
 }
 
 void Game::update(float dt) {
+  if (status == GameStatus::StartScreen)
+    return;
   if (status == GameStatus::GameOver || status == GameStatus::Win)
     return;
-
   if (status == GameStatus::Respawn) {
     respawnTimer -= dt;
     if (respawnTimer <= 0.f)
@@ -126,6 +174,10 @@ void Game::update(float dt) {
   int dotsLeft = 0;
   registry.view<TagDot>().each([&](auto) { dotsLeft++; });
   if (dotsLeft == 0) {
+    if (score > highScore) {
+      highScore = score;
+      saveHighScore();
+    }
     status = GameStatus::Win;
     return;
   }
@@ -138,6 +190,10 @@ void Game::update(float dt) {
             return;
           if (pacPos.row == ghostPos.row && pacPos.col == ghostPos.col) {
             lives--;
+            if (score > highScore) {
+              highScore = score;
+              saveHighScore();
+            }
             if (lives <= 0) {
               status = GameStatus::GameOver;
             } else {

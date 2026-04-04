@@ -32,28 +32,36 @@ int main() {
 
     game.update(dt);
 
-    auto &registry = game.getRegistry();
-    MovementSystem::update(registry, game.getMap(), dt);
-    AISystem::update(registry, game.getMap(), dt);
-    int earned =
-        CollisionSystem::update(registry, const_cast<Map &>(game.getMap()));
-    game.addScore(earned);
-    AnimationSystem::update(registry, dt);
-
     window.clear(sf::Color::Black);
-    renderer.drawMap(game.getMap());
-    renderer.drawEntities(registry);
 
-    bool powered = false;
-    registry.view<TagPacman, Powered>().each(
-        [&](auto, auto) { powered = true; });
-    renderer.drawHUD(game.getScore(), game.getLives(), powered);
+    GameStatus status = game.getStatus();
 
-    if (game.getStatus() == GameStatus::Win)
-      renderer.drawMessage("YOU WIN!");
-    if (game.getStatus() == GameStatus::GameOver)
-      renderer.drawMessage("GAME OVER");
+    if (status == GameStatus::StartScreen) {
+      renderer.drawStartScreen(game.getHighScore());
+    } else {
+      auto &registry = game.getRegistry();
+      if (status == GameStatus::Playing || status == GameStatus::Respawn) {
+        MovementSystem::update(registry, game.getMap(), dt);
+        AISystem::update(registry, game.getMap(), dt);
+        int earned =
+            CollisionSystem::update(registry, const_cast<Map &>(game.getMap()));
+        game.addScore(earned);
+        AnimationSystem::update(registry, dt);
+      }
 
+      renderer.drawMap(game.getMap());
+      renderer.drawEntities(registry);
+
+      bool powered = false;
+      registry.view<TagPacman, Powered>().each(
+          [&](auto, auto) { powered = true; });
+      renderer.drawHUD(game.getScore(), game.getLives(), powered);
+
+      if (game.getStatus() == GameStatus::Win)
+        renderer.drawWinScreen(game.getScore(), game.getHighScore());
+      if (game.getStatus() == GameStatus::GameOver)
+        renderer.drawGameOver(game.getScore(), game.getHighScore());
+    }
     window.display();
   }
 
