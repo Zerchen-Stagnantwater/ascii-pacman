@@ -1,8 +1,9 @@
 #pragma once
-#include <entt/entt.hpp>
 #include "../core/Components.hpp"
+#include "../core/Direction.hpp"
+#include <entt/entt.hpp>
 
 class AnimationSystem {
 public:
-    static void update(entt::registry& registry, float dt);
+  static void update(entt::registry &registry, float dt);
 };

@@ -77,8 +77,31 @@ void RenderSystem::drawMap(const Map &map) {
 void RenderSystem::drawEntities(entt::registry &registry) {
   auto view = registry.view<Position, Renderable>();
   for (auto [entity, pos, render] : view.each()) {
-    sf::Text t(font, sf::String(render.glyph), Config::CELL_SIZE - 2);
-    t.setFillColor(render.color);
+
+    // skip flashing ghosts when not visible
+    if (registry.all_of<Flashing>(entity)) {
+      auto &flash = registry.get<Flashing>(entity);
+      if (!flash.visible)
+        continue;
+    }
+
+    wchar_t glyph = render.glyph;
+    sf::Color color = render.color;
+
+    // frightened ghost override
+    if (registry.all_of<GhostAI>(entity)) {
+      auto &ai = registry.get<GhostAI>(entity);
+      if (ai.mode == GhostMode::Frightened) {
+        glyph = L'W';
+        color = sf::Color(0, 0, 200); // dark blue
+      } else if (ai.mode == GhostMode::Dead) {
+        glyph = L'x';
+        color = sf::Color(100, 100, 100); // grey
+      }
+    }
+
+    sf::Text t(font, sf::String(glyph), Config::CELL_SIZE - 2);
+    t.setFillColor(color);
     t.setPosition(sf::Vector2f(pos.col * Config::CELL_SIZE,
                                pos.row * Config::CELL_SIZE + 40));
     window.draw(t);
