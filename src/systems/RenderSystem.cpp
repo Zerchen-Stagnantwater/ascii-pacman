@@ -75,61 +75,126 @@ void RenderSystem::drawMap(const Map &map) {
 }
 
 void RenderSystem::drawEntities(entt::registry &registry) {
-  auto view = registry.view<Position, Renderable>();
-  for (auto [entity, pos, render] : view.each()) {
+  // draw dots and collectibles first (bottom layer)
+  registry.view<Position, Renderable, TagDot>().each(
+      [&](auto, auto &pos, auto &render) {
+        sf::Text t(font, sf::String(render.glyph), Config::CELL_SIZE - 2);
+        t.setFillColor(render.color);
+        t.setPosition(sf::Vector2f(pos.col * Config::CELL_SIZE,
+                                   pos.row * Config::CELL_SIZE + 40));
+        window.draw(t);
+      });
 
-    // skip flashing ghosts when not visible
-    if (registry.all_of<Flashing>(entity)) {
-      auto &flash = registry.get<Flashing>(entity);
-      if (!flash.visible)
-        continue;
-    }
+  // draw ghosts
+  registry.view<Position, Renderable, GhostAI>().each(
+      [&](auto entity, auto &pos, auto &render, auto &ai) {
+        if (registry.all_of<Flashing>(entity)) {
+          auto &flash = registry.get<Flashing>(entity);
+          if (!flash.visible)
+            return;
+        }
 
-    wchar_t glyph = render.glyph;
-    sf::Color color = render.color;
+        wchar_t glyph = render.glyph;
+        sf::Color color = render.color;
 
-    // frightened ghost override
-    if (registry.all_of<GhostAI>(entity)) {
-      auto &ai = registry.get<GhostAI>(entity);
-      if (ai.mode == GhostMode::Frightened) {
-        glyph = L'W';
-        color = sf::Color(0, 0, 200); // dark blue
-      } else if (ai.mode == GhostMode::Dead) {
-        glyph = L'x';
-        color = sf::Color(100, 100, 100); // grey
-      }
-    }
+        if (ai.mode == GhostMode::Frightened) {
+          glyph = L'W';
+          color = registry.all_of<Flashing>(entity) ? sf::Color::White
+                                                    : sf::Color(0, 0, 200);
+        } else if (ai.mode == GhostMode::Dead) {
+          glyph = L'x';
+          color = sf::Color(100, 100, 100);
+        }
 
-    sf::Text t(font, sf::String(glyph), Config::CELL_SIZE - 2);
-    t.setFillColor(color);
-    t.setPosition(sf::Vector2f(pos.col * Config::CELL_SIZE,
-                               pos.row * Config::CELL_SIZE + 40));
+        sf::Text t(font, sf::String(glyph), Config::CELL_SIZE - 2);
+        t.setFillColor(color);
+        t.setPosition(sf::Vector2f(pos.col * Config::CELL_SIZE,
+                                   pos.row * Config::CELL_SIZE + 40));
+        window.draw(t);
+      });
+
+  // draw pacman
+  registry.view<Position, Renderable, TagPacman>().each(
+      [&](auto, auto &pos, auto &render) {
+        sf::Text t(font, sf::String(render.glyph), Config::CELL_SIZE - 2);
+        t.setFillColor(render.color);
+        t.setPosition(sf::Vector2f(pos.col * Config::CELL_SIZE,
+                                   pos.row * Config::CELL_SIZE + 40));
+        window.draw(t);
+      });
+
+  // draw score popups
+  registry.view<Position, ScorePopup>().each([&](auto, auto &pos, auto &popup) {
+    float alpha = (popup.lifetime / popup.maxLife) * 255.f;
+    sf::Text t(font, popup.text, 14);
+    t.setFillColor(sf::Color(255, 255, 0, (uint8_t)alpha));
+    t.setPosition(
+        sf::Vector2f(pos.col * Config::CELL_SIZE,
+                     pos.row * Config::CELL_SIZE + 40 -
+                         (1.f - popup.lifetime / popup.maxLife) * 20.f));
     window.draw(t);
+  });
+
+  // draw blinking text (READY!)
+  registry.view<BlinkingText>().each([&](auto, auto &blink) {
+    if (!blink.visible)
+      return;
+    drawCenteredText(sf::String(blink.text), blink.size, blink.color, 20.f);
+  });
+}
+
+void RenderSystem::drawHUD(int score, int highScore, int lives, bool powered,
+                           int countdown, bool respawning) {
+  // HUD background panel
+  sf::RectangleShape panel(sf::Vector2f((float)Config::WINDOW_W, 36.f));
+  panel.setFillColor(sf::Color(20, 20, 40));
+  panel.setPosition(sf::Vector2f(0, 0));
+  window.draw(panel);
+
+  // score
+  std::string scoreStr = "Score: " + std::to_string(score);
+  sf::Text scoreTxt(font, scoreStr, 16);
+  scoreTxt.setFillColor(sf::Color::White);
+  scoreTxt.setPosition(sf::Vector2f(6, 8));
+  window.draw(scoreTxt);
+
+  // high score center
+  std::string hiStr = "HI: " + std::to_string(highScore);
+  sf::Text hiTxt(font, hiStr, 16);
+  hiTxt.setFillColor(sf::Color::Yellow);
+  auto hiBounds = hiTxt.getLocalBounds();
+  hiTxt.setPosition(
+      sf::Vector2f(Config::WINDOW_W / 2.f - hiBounds.size.x / 2.f, 8));
+  window.draw(hiTxt);
+
+  // hearts right
+  std::wstring hearts;
+  for (int i = 0; i < lives; i++)
+    hearts += L'\u2665';
+  for (int i = lives; i < 3; i++)
+    hearts += L'\u2661';
+  sf::Text heartTxt(font, sf::String(hearts), 16);
+  heartTxt.setFillColor(sf::Color::Red);
+  heartTxt.setPosition(sf::Vector2f(Config::WINDOW_W - 70.f, 8));
+  window.draw(heartTxt);
+
+  // powered indicator
+  if (powered) {
+    sf::Text powTxt(font, "* POWERED *", 13);
+    powTxt.setFillColor(sf::Color(0, 255, 200));
+    auto b = powTxt.getLocalBounds();
+    powTxt.setPosition(sf::Vector2f(Config::WINDOW_W / 2.f - b.size.x / 2.f,
+                                    Config::WINDOW_H - 22.f));
+    window.draw(powTxt);
+  }
+
+  // countdown
+  if (respawning && countdown > 0) {
+    std::string cdStr = std::to_string(countdown);
+    drawCenteredText(sf::String(cdStr), 28, sf::Color::Cyan, 50.f);
   }
 }
 
-void RenderSystem::drawHUD(int score, int lives, bool powered) {
-  std::wstring hearts;
-  for (int i = 0; i < lives; i++)
-    hearts += L'\u2665'; // ♥
-  for (int i = lives; i < 3; i++)
-    hearts += L'\u2661'; // ♡ (empty heart for lost lives)
-
-  std::string scoreStr = "Score: " + std::to_string(score) + "   ";
-  if (powered)
-    scoreStr += "[POWERED]  ";
-
-  sf::Text scoreTxt(font, scoreStr, 16);
-  scoreTxt.setFillColor(sf::Color::White);
-  scoreTxt.setPosition(sf::Vector2f(4, 4));
-  window.draw(scoreTxt);
-
-  sf::Text heartTxt(font, sf::String(hearts), 16);
-  heartTxt.setFillColor(sf::Color::Red);
-  heartTxt.setPosition(
-      sf::Vector2f(Config::WINDOW_W - (3 * Config::CELL_SIZE) - 4, 4));
-  window.draw(heartTxt);
-}
 void RenderSystem::drawStartScreen(int highScore) {
   drawCenteredText(sf::String(L"ASCII PACMAN"), 32, sf::Color::Yellow, -80.f);
   drawCenteredText(sf::String(L"High Score: " + std::to_wstring(highScore)), 18,

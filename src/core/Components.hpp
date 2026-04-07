@@ -1,6 +1,7 @@
 #pragma once
 #include "Direction.hpp"
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Color.hpp>
 
 // --- Position on the grid ---
 struct Position {
@@ -62,6 +63,24 @@ struct Flashing {
   float flashRate = 0.15f; // how fast it alternates
   float flashTimer = 0.f;
   bool visible = true;
+};
+
+// Score popup tht floats and fades
+struct ScorePopup {
+  std::string text;
+  float lifetime = 1.2f;
+  float maxLife = 1.2f;
+};
+
+// Blinking text (Ready!, countdown)
+struct BlinkingText {
+  std::string text;
+  sf::Color color;
+  unsigned int size;
+  float blinkRate = 0.4f;
+  float blinkTimer = 0.f;
+  bool visible = true;
+  float lifetime = -1.f; // -1 = infinite
 };
 
 // --- Tags (no data, just marks an entity) ---

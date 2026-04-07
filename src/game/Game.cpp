@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "../core/Constants.hpp"
 #include "../map/MapLoader.hpp"
+#include "core/Components.hpp"
 #include <SFML/Window/Keyboard.hpp>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -11,6 +12,7 @@ Game::Game() {
   loadHighScore();
   map.load(MapLoader::classic());
   initEntities();
+  spawnReadyText();
 }
 
 void Game::loadHighScore() {
@@ -32,14 +34,38 @@ void Game::saveHighScore() {
   f << j.dump(2);
 }
 
+void Game::spawnReadyText() {
+  readyEntity = registry.create();
+  registry.emplace<BlinkingText>(readyEntity, "READY!", sf::Color::Yellow, 22u,
+                                 0.4f, 0.f, true, -1.f);
+}
+
+void Game::clearUIEntities() {
+  if (readyEntity != entt::null && registry.valid(readyEntity)) {
+    registry.destroy(readyEntity);
+    readyEntity = entt::null;
+  }
+  if (countdownEntity != entt::null && registry.valid(countdownEntity)) {
+    registry.destroy(countdownEntity);
+    countdownEntity = entt::null;
+  }
+}
+
 void Game::reset() {
+  clearUIEntities();
   registry.clear();
   map.load(MapLoader::classic());
   score = 0;
   lives = 3;
+  ghostCombo = 1;
   status = GameStatus::Playing;
   respawnTimer = 0.f;
+  countdownTimer = 0.f;
+  countdownVal = 2;
   initEntities();
+  spawnReadyText();
+  status = GameStatus::Respawn;
+  respawnTimer = 3.f;
 }
 
 void Game::initEntities() {
@@ -147,8 +173,17 @@ void Game::update(float dt) {
     return;
   if (status == GameStatus::Respawn) {
     respawnTimer -= dt;
-    if (respawnTimer <= 0.f)
+    countdownTimer += dt;
+
+    int newVal = (int)(respawnTimer);
+    if (newVal != countdownVal && newVal > 0) {
+      countdownVal = newVal;
+    }
+    if (respawnTimer <= 0.f) {
+      clearUIEntities();
       status = GameStatus::Playing;
+      ghostCombo = 1;
+    }
     return;
   }
 
@@ -161,14 +196,26 @@ void Game::update(float dt) {
 
   // sync ghost modes with powered state
   bool pacPowered = false;
-  registry.view<TagPacman, Powered>().each(
-      [&](auto, auto) { pacPowered = true; });
+  float powerTimeLeft = 0.f;
+  registry.view<TagPacman, Powered>().each([&](auto, auto &p) {
+    pacPowered = true;
+    powerTimeLeft = p.timer;
+  });
 
   registry.view<GhostAI>().each([&](auto, auto &ai) {
     if (ai.mode == GhostMode::Dead)
       return;
     ai.mode = pacPowered ? GhostMode::Frightened : GhostMode::Chase;
   });
+
+  // tick score popups
+  registry.view<ScorePopup, Position>().each(
+      [&](auto entity, auto &popup, auto &) {
+        popup.lifetime -= dt;
+        if (popup.lifetime <= 0.f) {
+          registry.destroy(entity);
+        }
+      });
 
   // check win — count remaining dot entities
   int dotsLeft = 0;
@@ -198,8 +245,9 @@ void Game::update(float dt) {
               status = GameStatus::GameOver;
             } else {
               status = GameStatus::Respawn;
-              respawnTimer = 2.f;
-              // reset pacman position
+              respawnTimer = 3.f;
+              countdownVal = 3;
+              countdownTimer = 0.f;
               registry.view<Position, TagPacman>().each([&](auto, auto &pos) {
                 pos.row = 23;
                 pos.col = 14;
@@ -208,8 +256,15 @@ void Game::update(float dt) {
                 vel.dir = Direction::None;
                 vel.nextDir = Direction::None;
               });
+              spawnReadyText();
             }
           }
         });
   });
+}
+
+float Game::getPowerTimeLeft() {
+  float t = 0.f;
+  registry.view<TagPacman, Powered>().each([&](auto, auto &p) { t = p.timer; });
+  return t;
 }

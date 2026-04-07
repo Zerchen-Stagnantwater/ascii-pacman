@@ -41,12 +41,15 @@ int main() {
     } else {
       auto &registry = game.getRegistry();
       if (status == GameStatus::Playing || status == GameStatus::Respawn) {
-        MovementSystem::update(registry, game.getMap(), dt);
-        AISystem::update(registry, game.getMap(), dt);
-        int earned =
-            CollisionSystem::update(registry, const_cast<Map &>(game.getMap()));
-        game.addScore(earned);
-        AnimationSystem::update(registry, dt);
+        if (status == GameStatus::Playing) {
+
+          MovementSystem::update(registry, game.getMap(), dt);
+          AISystem::update(registry, game.getMap(), dt);
+          int earned = CollisionSystem::update(
+              registry, const_cast<Map &>(game.getMap()), game.getGhostCombo());
+          game.addScore(earned);
+        }
+        AnimationSystem::update(registry, dt, game.getPowerTimeLeft());
       }
 
       renderer.drawMap(game.getMap());
@@ -55,7 +58,8 @@ int main() {
       bool powered = false;
       registry.view<TagPacman, Powered>().each(
           [&](auto, auto) { powered = true; });
-      renderer.drawHUD(game.getScore(), game.getLives(), powered);
+      renderer.drawHUD(game.getScore(), game.getHighScore(), game.getLives(),
+                       powered, game.getCountdown(), game.isRespawning());
 
       if (game.getStatus() == GameStatus::Win)
         renderer.drawWinScreen(game.getScore(), game.getHighScore());

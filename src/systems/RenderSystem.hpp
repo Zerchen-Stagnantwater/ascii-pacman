@@ -11,7 +11,8 @@ public:
 
   void drawMap(const Map &map);
   void drawEntities(entt::registry &registry);
-  void drawHUD(int score, int lives, bool powered);
+  void drawHUD(int score, int highScore, int lives, bool powered, int countdown,
+               bool respawning);
   void drawStartScreen(int HighScore);
   void drawGameOver(int score, int HighScore);
   void drawWinScreen(int score, int HighScore);

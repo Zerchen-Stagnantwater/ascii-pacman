@@ -5,5 +5,5 @@
 
 class AnimationSystem {
 public:
-  static void update(entt::registry &registry, float dt);
+  static void update(entt::registry &registry, float dt, float powerTimeLeft);
 };
