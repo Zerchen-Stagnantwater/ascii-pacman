@@ -39,9 +39,9 @@ src/
 │   └── RenderSystem          # Draws everything — map, entities, HUD panel, overlays, screens
 │
 └── assets/
-├── fonts/                # DejaVu Sans Mono (supports box-drawing chars)
-└── maps/
-└── classic.txt       # The map layout — edit this to make new maps
+    ├── fonts/                # DejaVu Sans Mono (supports box-drawing chars)
+    └── maps/
+        └── classic.txt       # The map layout — edit this to make new maps
 ~~~
 ## Building
 

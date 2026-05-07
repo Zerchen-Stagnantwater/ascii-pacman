@@ -117,17 +117,23 @@ void Game::spawnPacman() {
 void Game::spawnGhosts() {
   struct GhostDef {
     int row, col;
+    int homeRow, homeCol;
     wchar_t glyph;
     sf::Color color;
     GhostPersonality personality;
     int scatterRow, scatterCol;
+    float exitDelay;
   };
 
   std::vector<GhostDef> defs = {
-      {14, 14, L'M', sf::Color(255, 0, 0), GhostPersonality::Blinky, 0, 25},
-      {14, 13, L'M', sf::Color(255, 184, 255), GhostPersonality::Pinky, 0, 2},
-      {14, 15, L'M', sf::Color(0, 255, 255), GhostPersonality::Inky, 29, 25},
-      {14, 12, L'M', sf::Color(255, 184, 82), GhostPersonality::Clyde, 29, 2},
+      {11, 14, 14, 14, L'M', sf::Color(255, 0, 0), GhostPersonality::Blinky, 0,
+       25, 0.f},
+      {14, 14, 14, 14, L'M', sf::Color(255, 184, 255), GhostPersonality::Pinky,
+       0, 2, 3.f},
+      {14, 13, 14, 13, L'M', sf::Color(0, 255, 255), GhostPersonality::Inky, 29,
+       25, 6.f},
+      {14, 15, 14, 15, L'M', sf::Color(255, 184, 82), GhostPersonality::Clyde,
+       29, 2, 9.f},
   };
 
   for (auto &d : defs) {
@@ -138,6 +144,8 @@ void Game::spawnGhosts() {
     registry.emplace<Renderable>(e, d.glyph, d.color);
     registry.emplace<GhostAI>(e, d.personality, GhostMode::Scatter, 0.f,
                               d.scatterRow, d.scatterCol);
+    registry.emplace<GhostHouse>(e, d.exitDelay, 0.f, d.exitDelay == 0.f,
+                                 d.homeRow, d.homeCol);
     registry.emplace<TagGhost>(e);
   }
 }
@@ -295,35 +303,55 @@ void Game::update(float dt) {
   }
   // check death — pacman touching a non-frightened ghost
   registry.view<Position, TagPacman>().each([&](auto, auto &pacPos) {
-    registry.view<Position, GhostAI>().each(
-        [&](auto, auto &ghostPos, auto &ai) {
-          if (ai.mode == GhostMode::Frightened || ai.mode == GhostMode::Dead)
-            return;
-          if (pacPos.row == ghostPos.row && pacPos.col == ghostPos.col) {
-            lives--;
-            if (score > highScore) {
-              highScore = score;
-              saveHighScore();
-            }
-            if (lives <= 0) {
-              status = GameStatus::GameOver;
-            } else {
-              status = GameStatus::Respawn;
-              respawnTimer = 3.f;
-              countdownVal = 3;
-              countdownTimer = 0.f;
-              registry.view<Position, TagPacman>().each([&](auto, auto &pos) {
-                pos.row = 23;
-                pos.col = 14;
-              });
-              registry.view<Velocity, TagPacman>().each([&](auto, auto &vel) {
-                vel.dir = Direction::None;
+    registry.view<Position, GhostAI>().each([&](auto, auto &ghostPos,
+                                                auto &ai) {
+      if (ai.mode == GhostMode::Frightened || ai.mode == GhostMode::Dead)
+        return;
+      if (pacPos.row == ghostPos.row && pacPos.col == ghostPos.col) {
+        lives--;
+        if (score > highScore) {
+          highScore = score;
+          saveHighScore();
+        }
+        if (lives <= 0) {
+          status = GameStatus::GameOver;
+        } else {
+          status = GameStatus::Respawn;
+          respawnTimer = 3.f;
+          countdownVal = 3;
+          countdownTimer = 0.f;
+
+          // reset pacman
+          registry.view<Position, TagPacman>().each([&](auto, auto &pos) {
+            pos.row = 23;
+            pos.col = 14;
+          });
+          registry.view<Velocity, TagPacman>().each([&](auto, auto &vel) {
+            vel.dir = Direction::None;
+            vel.nextDir = Direction::None;
+          });
+
+          // reset all ghosts back to house
+          registry.view<GhostHouse, Position, Velocity, GhostAI>().each(
+              [&](auto entity, auto &house, auto &pos, auto &vel, auto &ai) {
+                pos.row = house.homeRow;
+                pos.col = house.homeCol;
+                vel.dir = Direction::Left;
                 vel.nextDir = Direction::None;
+                ai.mode = GhostMode::Scatter;
+                ai.modeTimer = 0.f;
+                house.exited = false;
+                house.timer = 0.f;
+
+                // remove any active flash
+                if (registry.all_of<Flashing>(entity))
+                  registry.remove<Flashing>(entity);
               });
-              spawnReadyText();
-            }
-          }
-        });
+
+          spawnReadyText();
+        }
+      }
+    });
   });
 }
 

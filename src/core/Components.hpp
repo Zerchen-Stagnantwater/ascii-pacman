@@ -40,6 +40,14 @@ struct GhostAI {
   int scatterCol = 0;
 };
 
+// Controls ghost house exit timing
+struct GhostHouse {
+  float exitDelay; // seconds before leaving house
+  float timer = 0.f;
+  bool exited = false;
+  int homeRow, homeCol; // position inside house to return to when dead
+};
+
 // --- Power pellet state ---
 struct Powered {
   float timer = 0.f;

@@ -83,6 +83,27 @@ static Direction randomDirection(const Map &map, int row, int col,
 }
 
 void AISystem::update(entt::registry &registry, const Map &map, float dt) {
+  // ghost house exit logic
+  registry.view<GhostHouse, Position, Velocity, GhostAI>().each(
+      [&](auto, auto &house, auto &pos, auto &vel, auto &ai) {
+        if (house.exited)
+          return;
+
+        house.timer += dt;
+        if (house.timer >= house.exitDelay) {
+          house.exited = true;
+          // move to just outside house
+          pos.row = 11;
+          pos.col = 14;
+          vel.dir = Direction::Left;
+          ai.mode = GhostMode::Scatter;
+          ai.modeTimer = 0.f;
+        } else {
+          // bounce inside house while waiting
+          vel.dir = Direction::None;
+        }
+        return;
+      });
   // get pacman position and direction
   int pacRow = 0, pacCol = 0;
   Direction pacDir = Direction::None;

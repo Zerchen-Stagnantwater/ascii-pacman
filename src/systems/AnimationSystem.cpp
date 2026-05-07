@@ -58,23 +58,36 @@ void AnimationSystem::update(entt::registry &registry, float dt,
     }
   });
 
-  // Ghost death flash + destroy
-  std::vector<entt::entity> toDestroy;
-  registry.view<Flashing, Renderable>().each(
-      [&](auto entity, auto &flash, auto &render) {
-        flash.timer -= dt;
-        flash.flashTimer += dt;
-        if (flash.flashTimer >= flash.flashRate) {
-          flash.flashTimer = 0.f;
-          flash.visible = !flash.visible;
-        }
-        if (flash.timer <= 0.f)
-          toDestroy.push_back(entity);
-      });
-  for (auto e : toDestroy)
-    if (registry.valid(e))
-      registry.destroy(e);
+  // Ghost death flash — return to house instead of destroying
+  registry.view<Flashing>().each([&](auto entity, auto &flash) {
+    flash.timer -= dt;
+    flash.flashTimer += dt;
+    if (flash.flashTimer >= flash.flashRate) {
+      flash.flashTimer = 0.f;
+      flash.visible = !flash.visible;
+    }
+    if (flash.timer <= 0.f) {
+      // return to house
+      if (registry.valid(entity) &&
+          registry.all_of<GhostHouse, Position, Velocity, GhostAI>(entity)) {
+        auto &house = registry.get<GhostHouse>(entity);
+        auto &pos = registry.get<Position>(entity);
+        auto &vel = registry.get<Velocity>(entity);
+        auto &ai = registry.get<GhostAI>(entity);
 
+        pos.row = house.homeRow;
+        pos.col = house.homeCol;
+        vel.dir = Direction::Left;
+        vel.nextDir = Direction::None;
+        ai.mode = GhostMode::Scatter;
+        ai.modeTimer = 0.f;
+        house.exited = false;
+        house.timer = 0.f;
+
+        registry.remove<Flashing>(entity);
+      }
+    }
+  });
   // Blinking text (READY!, etc.)
   registry.view<BlinkingText>().each([&](auto entity, auto &blink) {
     blink.blinkTimer += dt;
