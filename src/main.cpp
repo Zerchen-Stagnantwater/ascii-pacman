@@ -59,10 +59,12 @@ int main() {
       registry.view<TagPacman, Powered>().each(
           [&](auto, auto) { powered = true; });
       renderer.drawHUD(game.getScore(), game.getHighScore(), game.getLives(),
-                       powered, game.getCountdown(), game.isRespawning());
+                       powered, game.getCountdown(), game.isRespawning(),
+                       game.getLevel());
 
       if (game.getStatus() == GameStatus::Win)
-        renderer.drawWinScreen(game.getScore(), game.getHighScore());
+        renderer.drawWinScreen(game.getScore(), game.getHighScore(),
+                               game.getLevel());
       if (game.getStatus() == GameStatus::GameOver)
         renderer.drawGameOver(game.getScore(), game.getHighScore());
     }

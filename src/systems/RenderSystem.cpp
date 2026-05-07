@@ -144,7 +144,7 @@ void RenderSystem::drawEntities(entt::registry &registry) {
 }
 
 void RenderSystem::drawHUD(int score, int highScore, int lives, bool powered,
-                           int countdown, bool respawning) {
+                           int countdown, bool respawning, int level) {
   // HUD background panel
   sf::RectangleShape panel(sf::Vector2f((float)Config::WINDOW_W, 36.f));
   panel.setFillColor(sf::Color(20, 20, 40));
@@ -178,6 +178,15 @@ void RenderSystem::drawHUD(int score, int highScore, int lives, bool powered,
   heartTxt.setPosition(sf::Vector2f(Config::WINDOW_W - 70.f, 8));
   window.draw(heartTxt);
 
+  // level bottom center
+  std::string lvlStr = "LEVEL " + std::to_string(level);
+  sf::Text lvlTxt(font, lvlStr, 14);
+  lvlTxt.setFillColor(sf::Color(150, 150, 255));
+  auto lvlBounds = lvlTxt.getLocalBounds();
+  lvlTxt.setPosition(
+      sf::Vector2f(Config::WINDOW_W / 2.f - lvlBounds.size.x / 2.f,
+                   Config::WINDOW_H - 20.f));
+  window.draw(lvlTxt);
   // powered indicator
   if (powered) {
     sf::Text powTxt(font, "* POWERED *", 13);
@@ -214,12 +223,13 @@ void RenderSystem::drawGameOver(int score, int highScore) {
   drawCenteredText(sf::String(L"Press R to retry"), 18, sf::Color::Cyan, 60.f);
 }
 
-void RenderSystem::drawWinScreen(int score, int highScore) {
-  drawCenteredText(sf::String(L"YOU WIN!"), 32, sf::Color::Yellow, -80.f);
+void RenderSystem::drawWinScreen(int score, int highScore, int level) {
+  drawCenteredText(sf::String(L"LEVEL " + std::to_wstring(level) + L" CLEAR!"),
+                   28, sf::Color::Yellow, -80.f);
   drawCenteredText(sf::String(L"Score: " + std::to_wstring(score)), 20,
                    sf::Color::White, -30.f);
   drawCenteredText(sf::String(L"High Score: " + std::to_wstring(highScore)), 18,
                    sf::Color::Yellow, 10.f);
-  drawCenteredText(sf::String(L"Press R to play again"), 18, sf::Color::Cyan,
-                   60.f);
+  drawCenteredText(sf::String(L"Next level in 3 seconds..."), 14,
+                   sf::Color::Cyan, 55.f);
 }

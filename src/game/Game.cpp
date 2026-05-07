@@ -34,6 +34,34 @@ void Game::saveHighScore() {
   f << j.dump(2);
 }
 
+float Game::pacmanSpeed() const {
+  return std::max(Config::PACMAN_MAX_SPEED,
+                  Config::PACMAN_SPEED - (level - 1) * Config::SPEED_SCALE);
+}
+
+float Game::ghostSpeed() const {
+  return std::max(Config::GHOST_MAX_SPEED,
+                  Config::GHOST_SPEED - (level - 1) * Config::SPEED_SCALE);
+}
+
+void Game::nextLevel() {
+  level++;
+  levelTransition = false;
+  levelTimer = 0.f;
+
+  // clear entities but keep score and lives
+  clearUIEntities();
+  registry.clear();
+  map.load(MapLoader::classic());
+  ghostCombo = 1;
+  respawnTimer = 3.f;
+  countdownVal = 3;
+  status = GameStatus::Respawn;
+
+  initEntities();
+  spawnReadyText();
+}
+
 void Game::spawnReadyText() {
   readyEntity = registry.create();
   registry.emplace<BlinkingText>(readyEntity, "READY!", sf::Color::Yellow, 22u,
@@ -58,14 +86,15 @@ void Game::reset() {
   score = 0;
   lives = 3;
   ghostCombo = 1;
-  status = GameStatus::Playing;
-  respawnTimer = 0.f;
-  countdownTimer = 0.f;
-  countdownVal = 2;
-  initEntities();
-  spawnReadyText();
+  level = 1;
+  levelTimer = 0.f;
+  levelTransition = false;
   status = GameStatus::Respawn;
   respawnTimer = 3.f;
+  countdownTimer = 0.f;
+  countdownVal = 0;
+  initEntities();
+  spawnReadyText();
 }
 
 void Game::initEntities() {
@@ -77,8 +106,8 @@ void Game::initEntities() {
 void Game::spawnPacman() {
   auto e = registry.create();
   registry.emplace<Position>(e, 23, 14);
-  registry.emplace<Velocity>(e, Direction::None, Direction::None,
-                             Config::PACMAN_SPEED, 0.f);
+  registry.emplace<Velocity>(e, Direction::None, Direction::None, pacmanSpeed(),
+                             0.f);
   registry.emplace<Renderable>(e, L'C', sf::Color::Yellow);
   registry.emplace<PlayerInput>(e, PlayerInput::Scheme::Arrows);
   registry.emplace<Animated>(e, 0.f, true);
@@ -105,7 +134,7 @@ void Game::spawnGhosts() {
     auto e = registry.create();
     registry.emplace<Position>(e, d.row, d.col);
     registry.emplace<Velocity>(e, Direction::Left, Direction::None,
-                               Config::GHOST_SPEED, 0.f);
+                               ghostSpeed(), 0.f);
     registry.emplace<Renderable>(e, d.glyph, d.color);
     registry.emplace<GhostAI>(e, d.personality, GhostMode::Scatter, 0.f,
                               d.scatterRow, d.scatterCol);
@@ -169,7 +198,7 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
 void Game::update(float dt) {
   if (status == GameStatus::StartScreen)
     return;
-  if (status == GameStatus::GameOver || status == GameStatus::Win)
+  if (status == GameStatus::GameOver)
     return;
   if (status == GameStatus::Respawn) {
     respawnTimer -= dt;
@@ -220,15 +249,23 @@ void Game::update(float dt) {
   // check win — count remaining dot entities
   int dotsLeft = 0;
   registry.view<TagDot>().each([&](auto) { dotsLeft++; });
-  if (dotsLeft == 0) {
+  if (dotsLeft == 0 && !levelTransition) {
     if (score > highScore) {
       highScore = score;
       saveHighScore();
     }
+    levelTransition = true;
+    levelTimer = 0.f;
     status = GameStatus::Win;
-    return;
   }
 
+  if (levelTransition) {
+    levelTimer += dt;
+    if (levelTimer >= 3.f) {
+      nextLevel();
+    }
+    return;
+  }
   // check death — pacman touching a non-frightened ghost
   registry.view<Position, TagPacman>().each([&](auto, auto &pacPos) {
     registry.view<Position, GhostAI>().each(

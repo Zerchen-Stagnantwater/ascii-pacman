@@ -12,10 +12,10 @@ public:
   void drawMap(const Map &map);
   void drawEntities(entt::registry &registry);
   void drawHUD(int score, int highScore, int lives, bool powered, int countdown,
-               bool respawning);
+               bool respawning, int level);
   void drawStartScreen(int HighScore);
   void drawGameOver(int score, int HighScore);
-  void drawWinScreen(int score, int HighScore);
+  void drawWinScreen(int score, int HighScore, int level);
 
 private:
   sf::RenderWindow &window;
