@@ -233,3 +233,17 @@ void RenderSystem::drawWinScreen(int score, int highScore, int level) {
   drawCenteredText(sf::String(L"Next level in 3 seconds..."), 14,
                    sf::Color::Cyan, 55.f);
 }
+
+void RenderSystem::drawPauseScreen() {
+  // semi-transparent dark overlay
+  sf::RectangleShape overlay(
+      sf::Vector2f((float)Config::WINDOW_W, (float)Config::WINDOW_H));
+  overlay.setFillColor(sf::Color(0, 0, 0, 160));
+  overlay.setPosition(sf::Vector2f(0, 0));
+  window.draw(overlay);
+
+  drawCenteredText(sf::String(L"PAUSED"), 32, sf::Color::Yellow, -40.f);
+  drawCenteredText(sf::String(L"Press P to resume"), 18, sf::Color::Cyan, 20.f);
+  drawCenteredText(sf::String(L"Press ESC to quit"), 16,
+                   sf::Color(150, 150, 150), 55.f);
+}

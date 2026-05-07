@@ -163,6 +163,31 @@ void Game::spawnDots() {
 }
 
 void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
+  // ESC — quit to start screen
+  if (key == sf::Keyboard::Key::Escape) {
+    clearUIEntities();
+    registry.clear();
+    map.load(MapLoader::classic());
+    score = 0;
+    lives = 3;
+    level = 1;
+    ghostCombo = 1;
+    levelTransition = false;
+    status = GameStatus::StartScreen;
+    initEntities();
+    return;
+  }
+
+  // P — pause toggle
+  if (key == sf::Keyboard::Key::P) {
+    if (status == GameStatus::Playing) {
+      prePauseStatus = GameStatus::Playing;
+      status = GameStatus::Paused;
+    } else if (status == GameStatus::Paused) {
+      status = prePauseStatus;
+    }
+    return;
+  }
   if (!pressed)
     return;
   if (status == GameStatus::StartScreen) {
@@ -196,6 +221,8 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
 }
 
 void Game::update(float dt) {
+  if (status == GameStatus::Paused)
+    return;
   if (status == GameStatus::StartScreen)
     return;
   if (status == GameStatus::GameOver)

@@ -61,11 +61,12 @@ int main() {
       renderer.drawHUD(game.getScore(), game.getHighScore(), game.getLives(),
                        powered, game.getCountdown(), game.isRespawning(),
                        game.getLevel());
-
-      if (game.getStatus() == GameStatus::Win)
+      if (status == GameStatus::Paused)
+        renderer.drawPauseScreen();
+      if (status == GameStatus::Win)
         renderer.drawWinScreen(game.getScore(), game.getHighScore(),
                                game.getLevel());
-      if (game.getStatus() == GameStatus::GameOver)
+      if (status == GameStatus::GameOver)
         renderer.drawGameOver(game.getScore(), game.getHighScore());
     }
     window.display();

@@ -4,8 +4,17 @@
 #include "../map/Map.hpp"
 #include <SFML/Graphics.hpp>
 #include <entt/entt.hpp>
+#include <entt/process/process.hpp>
 
-enum class GameStatus { StartScreen, Playing, Dead, Respawn, GameOver, Win };
+enum class GameStatus {
+  StartScreen,
+  Playing,
+  Dead,
+  Respawn,
+  GameOver,
+  Win,
+  Paused
+};
 
 class Game {
 public:
@@ -46,6 +55,7 @@ private:
   int countdownVal = 2;
   entt::entity readyEntity = entt::null;
   entt::entity countdownEntity = entt::null;
+  GameStatus prePauseStatus = GameStatus::Playing;
 
   void initEntities();
   void spawnPacman();

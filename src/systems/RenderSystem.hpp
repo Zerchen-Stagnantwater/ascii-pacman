@@ -16,6 +16,7 @@ public:
   void drawStartScreen(int HighScore);
   void drawGameOver(int score, int HighScore);
   void drawWinScreen(int score, int HighScore, int level);
+  void drawPauseScreen();
 
 private:
   sf::RenderWindow &window;
