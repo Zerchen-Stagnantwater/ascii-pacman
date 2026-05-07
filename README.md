@@ -13,6 +13,9 @@ This project uses ECS (Entity Component System):
 - **Entities** are just IDs (Pacman, each ghost, each dot, each UI element)
 - **Components** are plain data structs (Position, Velocity, GhostAI, etc.)
 - **Systems** are stateless functions that operate on entities with specific components
+~~~
+~~~
+~~~
 src/
 ├── main.cpp                  # Entry point — wires systems together, runs the game loop
 │
@@ -40,7 +43,7 @@ src/
 ├── fonts/                # DejaVu Sans Mono (supports box-drawing chars)
 └── maps/
 └── classic.txt       # The map layout — edit this to make new maps
-
+~~~
 ## Building
 
 **Dependencies:**
