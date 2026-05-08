@@ -11,9 +11,13 @@ using json = nlohmann::json;
 Game::Game() {
   loadHighScore();
   try {
-    map.load(MapLoader::load("assets/maps/classic.txt"));
+    auto data = MapLoader::load("assets/maps/classic.txt");
+    map.load(data.layout);
+    spawns = data.spawns;
   } catch (...) {
-    map.load(MapLoader::classic());
+    auto data = MapLoader::classic();
+    map.load(data.layout);
+    spawns = data.spawns;
   }
   initEntities();
   spawnReadyText();
@@ -57,7 +61,9 @@ void Game::nextLevel() {
   // clear entities but keep score and lives
   clearUIEntities();
   registry.clear();
-  map.load(MapLoader::random());
+  auto data = MapLoader::random();
+  map.load(data.layout);
+  spawns = data.spawns;
   ghostCombo = 1;
   respawnTimer = 3.f;
   countdownVal = 3;
@@ -87,7 +93,15 @@ void Game::clearUIEntities() {
 void Game::reset() {
   clearUIEntities();
   registry.clear();
-  map.load(MapLoader::classic());
+  try {
+    auto data = MapLoader::load("assets/maps/classic.txt");
+    map.load(data.layout);
+    spawns = data.spawns;
+  } catch (...) {
+    auto data = MapLoader::classic();
+    map.load(data.layout);
+    spawns = data.spawns;
+  }
   score = 0;
   lives = 3;
   ghostCombo = 1;
@@ -111,7 +125,7 @@ void Game::initEntities() {
 
 void Game::spawnPacman() {
   auto e = registry.create();
-  registry.emplace<Position>(e, 23, 14);
+  registry.emplace<Position>(e, spawns.pacmanRow, spawns.pacmanCol);
   registry.emplace<Velocity>(e, Direction::None, Direction::None, pacmanSpeed(),
                              0.f);
   registry.emplace<Renderable>(e, L'C', sf::Color::Yellow);
@@ -132,14 +146,14 @@ void Game::spawnGhosts() {
   };
 
   std::vector<GhostDef> defs = {
-      {11, 14, 14, 14, L'M', sf::Color(255, 0, 0), GhostPersonality::Blinky, 0,
-       25, 0.f},
-      {14, 14, 14, 14, L'M', sf::Color(255, 184, 255), GhostPersonality::Pinky,
-       0, 2, 3.f},
-      {14, 13, 14, 13, L'M', sf::Color(0, 255, 255), GhostPersonality::Inky, 29,
-       25, 6.f},
-      {14, 15, 14, 15, L'M', sf::Color(255, 184, 82), GhostPersonality::Clyde,
-       29, 2, 9.f},
+      {spawns.blinkyRow, spawns.blinkyCol, spawns.blinkyRow, spawns.blinkyCol,
+       L'M', sf::Color(255, 0, 0), GhostPersonality::Blinky, 0, 25, 0.f},
+      {spawns.pinkyRow, spawns.pinkyCol, spawns.pinkyRow, spawns.pinkyCol, L'M',
+       sf::Color(255, 184, 255), GhostPersonality::Pinky, 0, 2, 3.f},
+      {spawns.inkyRow, spawns.inkyCol, spawns.inkyRow, spawns.inkyCol, L'M',
+       sf::Color(0, 255, 255), GhostPersonality::Inky, 29, 25, 6.f},
+      {spawns.clydeRow, spawns.clydeCol, spawns.clydeRow, spawns.clydeCol, L'M',
+       sf::Color(255, 184, 82), GhostPersonality::Clyde, 29, 2, 9.f},
   };
 
   for (auto &d : defs) {
@@ -185,7 +199,15 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
   if (key == sf::Keyboard::Key::Escape) {
     clearUIEntities();
     registry.clear();
-    map.load(MapLoader::classic());
+    try {
+      auto data = MapLoader::load("assets/maps/classic.txt");
+      map.load(data.layout);
+      spawns = data.spawns;
+    } catch (...) {
+      auto data = MapLoader::classic();
+      map.load(data.layout);
+      spawns = data.spawns;
+    }
     score = 0;
     lives = 3;
     level = 1;
@@ -269,8 +291,8 @@ void Game::update(float dt) {
 
       // reset pacman position
       registry.view<Position, TagPacman>().each([&](auto, auto &pos) {
-        pos.row = 23;
-        pos.col = 14;
+        pos.row = spawns.pacmanRow;
+        pos.col = spawns.pacmanCol;
       });
       registry.view<Velocity, TagPacman>().each([&](auto, auto &vel) {
         vel.dir = Direction::None;

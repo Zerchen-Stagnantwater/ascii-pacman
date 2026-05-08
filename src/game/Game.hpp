@@ -2,6 +2,7 @@
 #include "../core/Components.hpp"
 #include "../core/Direction.hpp"
 #include "../map/Map.hpp"
+#include "../map/MapLoader.hpp"
 #include <SFML/Graphics.hpp>
 #include <entt/entt.hpp>
 #include <entt/process/process.hpp>
@@ -42,6 +43,7 @@ public:
 private:
   entt::registry registry;
   Map map;
+  SpawnPoints spawns;
   int score = 0;
   int lives = 3;
   int highScore = 0;
