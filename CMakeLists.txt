@@ -9,6 +9,8 @@ include(cmake/CPM.cmake)
 CPMAddPackage("gh:skypjack/entt#v3.13.2")
 CPMAddPackage("gh:nlohmann/json#v3.11.3")
 
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+
 find_package(SFML 3 COMPONENTS Graphics Window System Audio REQUIRED)
 
 add_executable(pacman

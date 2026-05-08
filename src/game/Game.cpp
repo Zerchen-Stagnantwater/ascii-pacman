@@ -10,9 +10,14 @@ using json = nlohmann::json;
 
 Game::Game() {
   loadHighScore();
-  map.load(MapLoader::classic());
+  try {
+    map.load(MapLoader::load("assets/maps/classic.txt"));
+  } catch (...) {
+    map.load(MapLoader::classic());
+  }
   initEntities();
   spawnReadyText();
+  status = GameStatus::StartScreen;
 }
 
 void Game::loadHighScore() {
@@ -52,7 +57,7 @@ void Game::nextLevel() {
   // clear entities but keep score and lives
   clearUIEntities();
   registry.clear();
-  map.load(MapLoader::classic());
+  map.load(MapLoader::random());
   ghostCombo = 1;
   respawnTimer = 3.f;
   countdownVal = 3;

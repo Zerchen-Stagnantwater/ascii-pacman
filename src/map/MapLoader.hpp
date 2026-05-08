@@ -4,9 +4,11 @@
 
 class MapLoader {
 public:
-    // Loads map layout from a .txt file
-    static std::vector<std::string> load(const std::string& path);
+  static std::vector<std::string> load(const std::string &path);
+  static std::vector<std::string> classic();
+  static std::vector<std::string>
+  random(); // picks a random map from assets/maps/
 
-    // Falls back to hardcoded classic layout
-    static std::vector<std::string> classic();
+private:
+  static std::vector<std::string> getAvailableMaps();
 };
