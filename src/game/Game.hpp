@@ -48,6 +48,7 @@ private:
   int level = 1;
   float levelTimer = 0.f;
   bool levelTransition = false;
+  bool extraLifeAwarded = false;
   GameStatus status = GameStatus::StartScreen;
   float respawnTimer = 0.f;
   int ghostCombo = 1; // multiplier: 1=200, 2=400, 3=800, 4=1600

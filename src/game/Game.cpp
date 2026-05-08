@@ -93,6 +93,7 @@ void Game::reset() {
   respawnTimer = 3.f;
   countdownTimer = 0.f;
   countdownVal = 0;
+  extraLifeAwarded = false;
   initEntities();
   spawnReadyText();
 }
@@ -307,6 +308,16 @@ void Game::update(float dt) {
       registry.remove<Powered>(entity);
   });
 
+  // extra life at 10,000 points
+  if (!extraLifeAwarded && score >= 10000) {
+    extraLifeAwarded = true;
+    lives = std::min(lives + 1, 5); // cap at 5
+
+    // spawn a temporary +1UP message
+    auto e = registry.create();
+    registry.emplace<BlinkingText>(e, "+1 UP!", sf::Color(255, 255, 0), 20u,
+                                   0.15f, 0.f, true, 3.f);
+  }
   // sync ghost modes with powered state
   bool pacPowered = false;
   float powerTimeLeft = 0.f;
