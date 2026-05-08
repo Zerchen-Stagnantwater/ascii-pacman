@@ -1,12 +1,11 @@
 #include "CollisionSystem.hpp"
 #include "../core/Constants.hpp"
 
-int CollisionSystem::update(entt::registry &registry, Map &map,
-                            int &ghostCombo) {
+int CollisionSystem::update(entt::registry &registry, Map &map, int &ghostCombo,
+                            AudioSystem &audio) {
   int earned = 0;
 
   registry.view<Position, TagPacman>().each([&](auto pacEntity, auto &pacPos) {
-    // collect dots
     std::vector<entt::entity> toDestroy;
     registry.view<Position, Collectible, TagDot>().each(
         [&](auto dotEntity, auto &dotPos, auto &collect) {
@@ -16,6 +15,9 @@ int CollisionSystem::update(entt::registry &registry, Map &map,
               registry.emplace_or_replace<Powered>(pacEntity,
                                                    Config::POWER_DURATION);
               ghostCombo = 1;
+              audio.play(SoundId::Power);
+            } else {
+              audio.play(SoundId::Waka);
             }
             toDestroy.push_back(dotEntity);
             map.setCell(dotPos.row, dotPos.col, Cell::Empty);
@@ -24,7 +26,6 @@ int CollisionSystem::update(entt::registry &registry, Map &map,
     for (auto e : toDestroy)
       registry.destroy(e);
 
-    // ghost collision
     registry.view<Position, GhostAI>().each(
         [&](auto ghostEntity, auto &ghostPos, auto &ai) {
           if (ai.mode != GhostMode::Frightened)
@@ -34,7 +35,6 @@ int CollisionSystem::update(entt::registry &registry, Map &map,
             earned += points;
             ghostCombo = std::min(ghostCombo * 2, 8);
 
-            // spawn score popup
             auto popup = registry.create();
             registry.emplace<Position>(popup, ghostPos.row, ghostPos.col);
             registry.emplace<ScorePopup>(popup, "+" + std::to_string(points),
@@ -42,6 +42,7 @@ int CollisionSystem::update(entt::registry &registry, Map &map,
 
             ai.mode = GhostMode::Dead;
             registry.emplace_or_replace<Flashing>(ghostEntity);
+            audio.play(SoundId::GhostEat);
           }
         });
   });

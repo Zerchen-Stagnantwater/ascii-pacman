@@ -24,6 +24,7 @@ add_executable(pacman
     src/systems/CollisionSystem.cpp
     src/systems/InputSystem.cpp
     src/systems/AnimationSystem.cpp
+    src/systems/AudioSystem.cpp
 )
 
 target_include_directories(pacman PRIVATE src)

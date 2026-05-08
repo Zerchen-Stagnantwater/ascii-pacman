@@ -6,6 +6,7 @@
 #include "systems/MovementSystem.hpp"
 #include "systems/RenderSystem.hpp"
 #include <SFML/Graphics.hpp>
+#include <SFML/Window/Keyboard.hpp>
 
 int main() {
   sf::RenderWindow window(
@@ -26,8 +27,12 @@ int main() {
     while (const std::optional event = window.pollEvent()) {
       if (event->is<sf::Event::Closed>())
         window.close();
-      if (const auto *key = event->getIf<sf::Event::KeyPressed>())
+      if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
         game.handleInput(key->code, true);
+        if (key->code == sf::Keyboard::Key::M) {
+          game.getAudio().setMuted(!game.getAudio().isMuted());
+        }
+      }
     }
 
     game.update(dt);
@@ -46,7 +51,8 @@ int main() {
           MovementSystem::update(registry, game.getMap(), dt);
           AISystem::update(registry, game.getMap(), dt);
           int earned = CollisionSystem::update(
-              registry, const_cast<Map &>(game.getMap()), game.getGhostCombo());
+              registry, const_cast<Map &>(game.getMap()), game.getGhostCombo(),
+              game.getAudio());
           game.addScore(earned);
         }
         AnimationSystem::update(registry, dt, game.getPowerTimeLeft());

@@ -3,6 +3,7 @@
 #include "../core/Direction.hpp"
 #include "../map/Map.hpp"
 #include "../map/MapLoader.hpp"
+#include "../systems/AudioSystem.hpp"
 #include <SFML/Graphics.hpp>
 #include <entt/entt.hpp>
 #include <entt/process/process.hpp>
@@ -24,7 +25,6 @@ public:
   void handleInput(sf::Keyboard::Key key, bool pressed);
   void update(float dt);
   void reset();
-
   float getPowerTimeLeft();
 
   entt::registry &getRegistry() { return registry; }
@@ -39,6 +39,7 @@ public:
   GameStatus getStatus() const { return status; }
   void addScore(int points) { score += points; }
   bool isRespawning() const { return status == GameStatus::Respawn; }
+  AudioSystem &getAudio() { return audio; }
 
 private:
   entt::registry registry;
@@ -59,6 +60,7 @@ private:
   entt::entity readyEntity = entt::null;
   entt::entity countdownEntity = entt::null;
   GameStatus prePauseStatus = GameStatus::Playing;
+  AudioSystem audio;
 
   void initEntities();
   void spawnPacman();

@@ -10,6 +10,7 @@ using json = nlohmann::json;
 
 Game::Game() {
   loadHighScore();
+  audio.load("assets");
   try {
     auto data = MapLoader::load("assets/maps/classic.txt");
     map.load(data.layout);
@@ -57,7 +58,7 @@ void Game::nextLevel() {
   level++;
   levelTransition = false;
   levelTimer = 0.f;
-
+  audio.stopSiren();
   // clear entities but keep score and lives
   clearUIEntities();
   registry.clear();
@@ -93,6 +94,7 @@ void Game::clearUIEntities() {
 void Game::reset() {
   clearUIEntities();
   registry.clear();
+  audio.stopSiren();
   try {
     auto data = MapLoader::load("assets/maps/classic.txt");
     map.load(data.layout);
@@ -269,6 +271,8 @@ void Game::update(float dt) {
     return;
   // clear READY! once player starts moving
   if (status == GameStatus::Playing) {
+    audio.startSiren();
+    audio.setSirenPitch(1.f + (level - 1) * 0.05f); // faster each level
     registry.view<Velocity, TagPacman>().each([&](auto, auto &vel) {
       if (vel.dir != Direction::None)
         clearUIEntities();
@@ -339,7 +343,7 @@ void Game::update(float dt) {
   if (!extraLifeAwarded && score >= 10000) {
     extraLifeAwarded = true;
     lives = std::min(lives + 1, 5); // cap at 5
-
+    audio.play(SoundId::ExtraLife);
     // spawn a temporary +1UP message
     auto e = registry.create();
     registry.emplace<BlinkingText>(e, "+1 UP!", sf::Color(255, 255, 0), 20u,
@@ -376,6 +380,8 @@ void Game::update(float dt) {
       highScore = score;
       saveHighScore();
     }
+    audio.stopSiren();
+    audio.play(SoundId::LevelClear);
     levelTransition = true;
     levelTimer = 0.f;
     status = GameStatus::Win;
@@ -402,7 +408,8 @@ void Game::update(float dt) {
               highScore = score;
               saveHighScore();
             }
-
+            audio.stopSiren();
+            audio.play(SoundId::Death);
             registry.emplace<Dying>(pacEntity);
             status = GameStatus::Respawn;
             respawnTimer = 2.5f;
