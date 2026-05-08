@@ -4,9 +4,32 @@
 void AnimationSystem::update(entt::registry &registry, float dt,
                              float powerTimeLeft) {
 
-  // Pacman direction glyph + mouth
+  // Pacman death animation
+  registry.view<Dying, Renderable, Velocity>().each(
+      [&](auto, auto &dying, auto &render, auto &vel) {
+        vel.dir = Direction::None;
+        vel.nextDir = Direction::None;
+        dying.timer += dt;
+
+        float frameDur = dying.duration / 6.f;
+        dying.frame = (int)(dying.timer / frameDur);
+
+        wchar_t frames[] = {L'C', L'c', L'(', L')', L'|', L' '};
+        if (dying.frame >= 6) {
+          dying.done = true;
+          render.glyph = L' ';
+        } else {
+          render.glyph = frames[dying.frame];
+          render.color =
+              sf::Color(255, 255 - dying.frame * 40, 0); // fade to red
+        }
+      });
+
+  // Pacman normal mouth + direction (skip if dying)
   registry.view<Animated, Renderable, Velocity, TagPacman>().each(
-      [&](auto, auto &anim, auto &render, auto &vel) {
+      [&](auto entity, auto &anim, auto &render, auto &vel) {
+        if (registry.all_of<Dying>(entity))
+          return;
         anim.timer += dt;
         if (anim.timer >= 0.1f) {
           anim.timer = 0.f;
@@ -39,26 +62,47 @@ void AnimationSystem::update(entt::registry &registry, float dt,
         }
       });
 
-  // Ghost power warning flash (last 2 seconds)
+  // Power pellet pulsing
+  registry.view<Pulsing, Renderable>().each(
+      [&](auto, auto &pulse, auto &render) {
+        pulse.timer += dt;
+        if (pulse.timer >= pulse.rate) {
+          pulse.timer = 0.f;
+          pulse.bright = !pulse.bright;
+        }
+        render.color = pulse.bright ? sf::Color::White : sf::Color(80, 80, 80);
+      });
+
+  // Ghost power warning flash
   bool warning =
       powerTimeLeft > 0.f && powerTimeLeft <= Config::POWER_WARNING_TIME;
-  registry.view<GhostAI, Renderable>().each([&](auto entity, auto &ai,
-                                                auto &render) {
-    if (ai.mode != GhostMode::Frightened)
-      return;
-    if (!registry.all_of<Flashing>(entity) && warning) {
-      // use renderable color to flash between blue and white
-      static float warnTimer = 0.f;
-      warnTimer += dt;
-      if (warnTimer >= 0.2f) {
-        warnTimer = 0.f;
-        render.color = (render.color == sf::Color::White) ? sf::Color(0, 0, 200)
-                                                          : sf::Color::White;
-      }
+  static float warnTimer = 0.f;
+  static bool warnBright = true;
+  if (warning) {
+    warnTimer += dt;
+    if (warnTimer >= 0.2f) {
+      warnTimer = 0.f;
+      warnBright = !warnBright;
     }
-  });
+  } else {
+    warnTimer = 0.f;
+    warnBright = true;
+  }
 
-  // Ghost death flash — return to house instead of destroying
+  registry.view<GhostAI, Renderable>().each(
+      [&](auto entity, auto &ai, auto &render) {
+        if (ai.mode != GhostMode::Frightened) {
+          if (registry.all_of<OriginalColor>(entity))
+            render.color = registry.get<OriginalColor>(entity).color;
+          return;
+        }
+        if (registry.all_of<Flashing>(entity))
+          return;
+        render.color =
+            warning && !warnBright ? sf::Color::White : sf::Color(0, 0, 200);
+      });
+
+  // Ghost death flash
   registry.view<Flashing>().each([&](auto entity, auto &flash) {
     flash.timer -= dt;
     flash.flashTimer += dt;
@@ -67,14 +111,12 @@ void AnimationSystem::update(entt::registry &registry, float dt,
       flash.visible = !flash.visible;
     }
     if (flash.timer <= 0.f) {
-      // return to house
       if (registry.valid(entity) &&
           registry.all_of<GhostHouse, Position, Velocity, GhostAI>(entity)) {
         auto &house = registry.get<GhostHouse>(entity);
         auto &pos = registry.get<Position>(entity);
         auto &vel = registry.get<Velocity>(entity);
         auto &ai = registry.get<GhostAI>(entity);
-
         pos.row = house.homeRow;
         pos.col = house.homeCol;
         vel.dir = Direction::Left;
@@ -83,12 +125,12 @@ void AnimationSystem::update(entt::registry &registry, float dt,
         ai.modeTimer = 0.f;
         house.exited = false;
         house.timer = 0.f;
-
         registry.remove<Flashing>(entity);
       }
     }
   });
-  // Blinking text (READY!, etc.)
+
+  // Blinking text
   registry.view<BlinkingText>().each([&](auto entity, auto &blink) {
     blink.blinkTimer += dt;
     if (blink.blinkTimer >= blink.blinkRate) {
@@ -101,6 +143,4 @@ void AnimationSystem::update(entt::registry &registry, float dt,
         registry.destroy(entity);
     }
   });
-
-  // Score popups float upward (handled via lifetime in Game::update)
 }

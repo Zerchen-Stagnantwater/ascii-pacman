@@ -146,6 +146,7 @@ void Game::spawnGhosts() {
                               d.scatterRow, d.scatterCol);
     registry.emplace<GhostHouse>(e, d.exitDelay, 0.f, d.exitDelay == 0.f,
                                  d.homeRow, d.homeCol);
+    registry.emplace<OriginalColor>(e, d.color);
     registry.emplace<TagGhost>(e);
   }
 }
@@ -165,6 +166,9 @@ void Game::spawnDots() {
             e, cell == Cell::Pellet ? L'\u25CF' : L'\u00B7',
             sf::Color(200, 200, 200));
         registry.emplace<TagDot>(e);
+        if (cell == Cell::Pellet) {
+          registry.emplace<Pulsing>(e);
+        }
       }
     }
   }
@@ -235,22 +239,67 @@ void Game::update(float dt) {
     return;
   if (status == GameStatus::GameOver)
     return;
+  // clear READY! once player starts moving
+  if (status == GameStatus::Playing) {
+    registry.view<Velocity, TagPacman>().each([&](auto, auto &vel) {
+      if (vel.dir != Direction::None)
+        clearUIEntities();
+    });
+  }
   if (status == GameStatus::Respawn) {
     respawnTimer -= dt;
-    countdownTimer += dt;
 
-    int newVal = (int)(respawnTimer);
-    if (newVal != countdownVal && newVal > 0) {
-      countdownVal = newVal;
-    }
-    if (respawnTimer <= 0.f) {
+    // check if dying animation is done
+    bool stillDying = false;
+    registry.view<Dying>().each([&](auto, auto &dying) {
+      if (!dying.done)
+        stillDying = true;
+    });
+
+    if (respawnTimer <= 0.f && !stillDying) {
+      // remove Dying component
+      registry.view<Dying, TagPacman>().each(
+          [&](auto entity, auto &) { registry.remove<Dying>(entity); });
+
+      // reset pacman position
+      registry.view<Position, TagPacman>().each([&](auto, auto &pos) {
+        pos.row = 23;
+        pos.col = 14;
+      });
+      registry.view<Velocity, TagPacman>().each([&](auto, auto &vel) {
+        vel.dir = Direction::None;
+        vel.nextDir = Direction::None;
+      });
+
+      // reset ghosts
+      registry.view<GhostHouse, Position, Velocity, GhostAI>().each(
+          [&](auto entity, auto &house, auto &pos, auto &vel, auto &ai) {
+            pos.row = house.homeRow;
+            pos.col = house.homeCol;
+            vel.dir = Direction::Left;
+            vel.nextDir = Direction::None;
+            ai.mode = GhostMode::Scatter;
+            ai.modeTimer = 0.f;
+            house.exited = false;
+            house.timer = 0.f;
+            if (registry.all_of<Flashing>(entity))
+              registry.remove<Flashing>(entity);
+          });
+      // clear UI and show READY!
       clearUIEntities();
-      status = GameStatus::Playing;
-      ghostCombo = 1;
+      countdownVal = 3;
+      countdownTimer = 0.f;
+      respawnTimer = 3.f; // countdown duration
+
+      if (lives <= 0) {
+        status = GameStatus::GameOver;
+      } else {
+        spawnReadyText();
+        status = GameStatus::Playing;
+      }
     }
     return;
   }
-
   // tick powered timers
   registry.view<Powered>().each([&](auto entity, auto &powered) {
     powered.timer -= dt;
@@ -302,56 +351,25 @@ void Game::update(float dt) {
     return;
   }
   // check death — pacman touching a non-frightened ghost
-  registry.view<Position, TagPacman>().each([&](auto, auto &pacPos) {
-    registry.view<Position, GhostAI>().each([&](auto, auto &ghostPos,
-                                                auto &ai) {
-      if (ai.mode == GhostMode::Frightened || ai.mode == GhostMode::Dead)
-        return;
-      if (pacPos.row == ghostPos.row && pacPos.col == ghostPos.col) {
-        lives--;
-        if (score > highScore) {
-          highScore = score;
-          saveHighScore();
-        }
-        if (lives <= 0) {
-          status = GameStatus::GameOver;
-        } else {
-          status = GameStatus::Respawn;
-          respawnTimer = 3.f;
-          countdownVal = 3;
-          countdownTimer = 0.f;
+  registry.view<Position, TagPacman>().each([&](auto pacEntity, auto &pacPos) {
+    if (registry.all_of<Dying>(pacEntity))
+      return;
+    registry.view<Position, GhostAI>().each(
+        [&](auto, auto &ghostPos, auto &ai) {
+          if (ai.mode == GhostMode::Frightened || ai.mode == GhostMode::Dead)
+            return;
+          if (pacPos.row == ghostPos.row && pacPos.col == ghostPos.col) {
+            lives--;
+            if (score > highScore) {
+              highScore = score;
+              saveHighScore();
+            }
 
-          // reset pacman
-          registry.view<Position, TagPacman>().each([&](auto, auto &pos) {
-            pos.row = 23;
-            pos.col = 14;
-          });
-          registry.view<Velocity, TagPacman>().each([&](auto, auto &vel) {
-            vel.dir = Direction::None;
-            vel.nextDir = Direction::None;
-          });
-
-          // reset all ghosts back to house
-          registry.view<GhostHouse, Position, Velocity, GhostAI>().each(
-              [&](auto entity, auto &house, auto &pos, auto &vel, auto &ai) {
-                pos.row = house.homeRow;
-                pos.col = house.homeCol;
-                vel.dir = Direction::Left;
-                vel.nextDir = Direction::None;
-                ai.mode = GhostMode::Scatter;
-                ai.modeTimer = 0.f;
-                house.exited = false;
-                house.timer = 0.f;
-
-                // remove any active flash
-                if (registry.all_of<Flashing>(entity))
-                  registry.remove<Flashing>(entity);
-              });
-
-          spawnReadyText();
-        }
-      }
-    });
+            registry.emplace<Dying>(pacEntity);
+            status = GameStatus::Respawn;
+            respawnTimer = 2.5f;
+          }
+        });
   });
 }
 

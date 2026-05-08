@@ -1,5 +1,6 @@
 #include "RenderSystem.hpp"
 #include "../core/Constants.hpp"
+#include <iterator>
 
 RenderSystem::RenderSystem(sf::RenderWindow &win) : window(win) {}
 
@@ -99,11 +100,20 @@ void RenderSystem::drawEntities(entt::registry &registry) {
 
         if (ai.mode == GhostMode::Frightened) {
           glyph = L'W';
-          color = registry.all_of<Flashing>(entity) ? sf::Color::White
-                                                    : sf::Color(0, 0, 200);
+          color = render.color;
         } else if (ai.mode == GhostMode::Dead) {
-          glyph = L'x';
-          color = sf::Color(100, 100, 100);
+          bool inHouse = false;
+          if (registry.all_of<GhostHouse>(entity)) {
+            auto &house = registry.get<GhostHouse>(entity);
+            inHouse = !house.exited;
+          }
+          glyph = inHouse ? L'.' : L'o';
+          color = sf::Color(100, 180, 255);
+        } else {
+          glyph = render.glyph;
+          color = registry.all_of<OriginalColor>(entity)
+                      ? registry.get<OriginalColor>(entity).color
+                      : render.color;
         }
 
         sf::Text t(font, sf::String(glyph), Config::CELL_SIZE - 2);

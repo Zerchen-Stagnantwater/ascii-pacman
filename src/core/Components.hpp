@@ -8,6 +8,10 @@ struct Position {
   int row, col;
 };
 
+struct OriginalColor {
+  sf::Color color;
+};
+
 // --- Movement ---
 struct Velocity {
   Direction dir = Direction::None;
@@ -51,6 +55,21 @@ struct GhostHouse {
 // --- Power pellet state ---
 struct Powered {
   float timer = 0.f;
+};
+
+// Power pellet pulse
+struct Pulsing {
+  float timer = 0.f;
+  float rate = 0.5f;
+  bool bright = true;
+};
+
+// Pacman death animation
+struct Dying {
+  float timer = 0.f;
+  float duration = 1.5f;
+  int frame = 0;
+  bool done = false;
 };
 
 // --- Mouth animation ---
