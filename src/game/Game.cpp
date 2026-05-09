@@ -256,10 +256,18 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
       reset();
       return;
     }
-    if (key == sf::Keyboard::Key::Left)
+    if (key == sf::Keyboard::Key::Left) {
       prevTheme();
-    if (key == sf::Keyboard::Key::Right)
+      return;
+    }
+    if (key == sf::Keyboard::Key::Right) {
       nextTheme();
+      return;
+    }
+    if (key == sf::Keyboard::Key::E) {
+      enterEditor();
+      return;
+    }
     return;
   }
 

@@ -1,8 +1,13 @@
 #include "MapLoader.hpp"
+#include "../editor/MapValidator.hpp"
+#include <algorithm>
 #include <cstdlib>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <numeric>
+#include <random>
 #include <stdexcept>
 
 namespace fs = std::filesystem;
@@ -58,6 +63,16 @@ MapData MapLoader::load(const std::string &path) {
   while (std::getline(file, line))
     raw.push_back(line);
 
+  // validate before parsing
+  auto result = MapValidator::validate(raw);
+  if (result.hasErrors()) {
+    for (auto &e : result.errors)
+      std::cerr << "[MAP ERROR] " << e << "\n";
+    throw std::runtime_error("Map validation failed: " + path);
+  }
+  for (auto &w : result.warnings)
+    std::cerr << "[MAP WARN] " << w << "\n";
+
   return parse(raw);
 }
 
@@ -83,12 +98,22 @@ MapData MapLoader::random() {
     seeded = true;
   }
 
-  int idx = std::rand() % maps.size();
-  try {
-    return load(maps[idx]);
-  } catch (...) {
-    return classic();
+  // shuffle and try each one
+  std::vector<int> indices(maps.size());
+  std::iota(indices.begin(), indices.end(), 0);
+  std::shuffle(indices.begin(), indices.end(),
+               std::default_random_engine(std::rand()));
+
+  for (int idx : indices) {
+    try {
+      return load(maps[idx]);
+    } catch (...) {
+      std::cerr << "[MAP] Skipping invalid map: " << maps[idx] << "\n";
+    }
   }
+
+  std::cerr << "[MAP] All maps invalid, falling back to classic\n";
+  return classic();
 }
 
 MapData MapLoader::classic() {

@@ -241,6 +241,8 @@ void RenderSystem::drawStartScreen(int highScore,
                    130.f);
   drawCenteredText(sf::String(L"Arrow keys to move   P = pause   M = mute"), 12,
                    theme.subtitleColor, 160.f);
+  drawCenteredText(sf::String(L"Press E to open Map Editor"), 13,
+                   theme.hudTextColor, 185.f);
 }
 void RenderSystem::drawGameOver(int score, int highScore) {
   drawCenteredText(sf::String(L"GAME OVER"), 32, theme.gameOverColor, -80.f);

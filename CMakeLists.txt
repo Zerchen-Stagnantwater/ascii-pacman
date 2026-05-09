@@ -19,6 +19,9 @@ add_executable(pacman
     src/map/MapLoader.cpp
     src/game/Game.cpp
     src/core/ThemeLoader.cpp
+    src/editor/MapEditor.cpp
+    src/editor/MapValidator.cpp
+    src/editor/EditorRenderSystem.cpp
     src/systems/MovementSystem.cpp
     src/systems/RenderSystem.cpp
     src/systems/AISystem.cpp

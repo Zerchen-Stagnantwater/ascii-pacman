@@ -17,7 +17,8 @@ enum class GameStatus {
   Respawn,
   GameOver,
   Win,
-  Paused
+  Paused,
+  MapEditor
 };
 
 class Game {
@@ -46,6 +47,8 @@ public:
   void setTheme(const Theme &t) { currentTheme = t; }
   const std::vector<Theme> &getThemes() const { return themes; }
   int getSelectedThemeIndex() const { return selectedThemeIndex; }
+  void enterEditor() { status = GameStatus::MapEditor; }
+  void exitEditor() { status = GameStatus::StartScreen; }
   void nextTheme();
   void prevTheme();
 
