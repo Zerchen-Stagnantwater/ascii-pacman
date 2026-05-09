@@ -103,14 +103,14 @@ cmake --build .
 - [x] Pause menu (P) + ESC to quit
 
 ### 🔧 Milestone 2 — Polish & Content
-- [ ] **Sound effects** — waka waka, ghost death, siren, power up (SFML::Audio)
-- [ ] **Pacman death animation** — flash before respawn
-- [ ] **Power pellet pulsing** — slow blink on `●`
-- [ ] **Extra life at 10,000 points**
-- [ ] **Ghost house exit logic** — ghosts exit one by one with delay
-- [ ] **Ghost eyes when dead** — show `oo` returning to house
-- [ ] **Map loader from file** — load from `assets/maps/classic.txt`
-- [ ] **Multiple maps** — cycle maps on level up
+- [x] **Sound effects** — waka waka, ghost death, siren, power up (SFML::Audio)
+- [x] **Pacman death animation** — flash before respawn
+- [x] **Power pellet pulsing** — slow blink on `●`
+- [x] **Extra life at 10,000 points**
+- [x] **Ghost house exit logic** — ghosts exit one by one with delay
+- [x] **Ghost eyes when dead** — show `oo` returning to house
+- [x] **Map loader from file** — load from `assets/maps/classic.txt`
+- [x] **Multiple maps** — cycle maps on level up
 
 ### 🎨 Milestone 3 — Themes & Editor
 - [ ] **Custom themes/skins** — swap wall color, glyph sets, HUD colors via config file
