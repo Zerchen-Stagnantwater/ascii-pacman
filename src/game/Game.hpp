@@ -6,6 +6,7 @@
 #include "../map/Map.hpp"
 #include "../map/MapLoader.hpp"
 #include "../systems/AudioSystem.hpp"
+#include "Leaderboard.hpp"
 #include <SFML/Graphics.hpp>
 #include <entt/entt.hpp>
 #include <entt/process/process.hpp>
@@ -18,7 +19,9 @@ enum class GameStatus {
   GameOver,
   Win,
   Paused,
-  MapEditor
+  MapEditor,
+  EnterInitials,
+  Leaderboard
 };
 
 class Game {
@@ -49,6 +52,9 @@ public:
   int getSelectedThemeIndex() const { return selectedThemeIndex; }
   void enterEditor() { status = GameStatus::MapEditor; }
   void exitEditor() { status = GameStatus::StartScreen; }
+  const Leaderboard &getLeaderboard() const { return leaderboard; }
+  const std::string &getInitialsInput() const { return initialsInput; }
+  void handleInitialInput(sf::Keyboard::Key key);
   void nextTheme();
   void prevTheme();
 
@@ -75,6 +81,9 @@ private:
   std::vector<Theme> themes;
   Theme currentTheme;
   int selectedThemeIndex = 0;
+  Leaderboard leaderboard;
+  std::string initialsInput = "";
+  bool leaderboardChecked = false;
 
   void initEntities();
   void spawnPacman();

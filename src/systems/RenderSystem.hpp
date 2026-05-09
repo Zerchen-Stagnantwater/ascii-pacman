@@ -1,6 +1,7 @@
 #pragma once
 #include "../core/Components.hpp"
 #include "../core/Theme.hpp"
+#include "../game/Leaderboard.hpp"
 #include "../map/Map.hpp"
 #include <SFML/Graphics.hpp>
 #include <entt/entt.hpp>
@@ -21,6 +22,9 @@ public:
   void drawGameOver(int score, int highScore);
   void drawWinScreen(int score, int highScore, int level);
   void drawPauseScreen();
+  void drawInitialEntry(const std::string &initials, int score,
+                        const Leaderboard &leaderboard);
+  void drawLeaderboard(const Leaderboard &leaderboard, int currentScore);
 
 private:
   float warnFlashTimer = 0.f;

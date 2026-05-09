@@ -19,6 +19,7 @@ Game::Game() {
     themes.push_back(ThemeLoader::retro());
   }
   currentTheme = themes[0];
+  leaderboard.load("assets/leaderboard.json");
   try {
     auto data = MapLoader::load("assets/maps/classic.txt");
     map.load(data.layout);
@@ -132,6 +133,7 @@ void Game::reset() {
   countdownTimer = 0.f;
   countdownVal = 0;
   extraLifeAwarded = false;
+  leaderboardChecked = false;
   initEntities();
   spawnReadyText();
 }
@@ -250,6 +252,20 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
   }
   if (!pressed)
     return;
+
+  if (status == GameStatus::EnterInitials) {
+    handleInitialInput(key);
+    return;
+  }
+
+  if (status == GameStatus::Leaderboard) {
+    if (key == sf::Keyboard::Key::Escape || key == sf::Keyboard::Key::Enter ||
+        key == sf::Keyboard::Key::L) {
+      status = GameStatus::StartScreen;
+    }
+    return;
+  }
+
   if (status == GameStatus::StartScreen) {
     if (key == sf::Keyboard::Key::Enter) {
       currentTheme = themes[selectedThemeIndex];
@@ -266,6 +282,10 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
     }
     if (key == sf::Keyboard::Key::E) {
       enterEditor();
+      return;
+    }
+    if (key == sf::Keyboard::Key::L) {
+      status = GameStatus::Leaderboard;
       return;
     }
     return;
@@ -358,6 +378,11 @@ void Game::update(float dt) {
 
       if (lives <= 0) {
         status = GameStatus::GameOver;
+        if (!leaderboardChecked && leaderboard.qualifies(score)) {
+          leaderboardChecked = true;
+          initialsInput = "";
+          status = GameStatus::EnterInitials;
+        }
       } else {
         spawnReadyText();
         status = GameStatus::Playing;
@@ -455,4 +480,37 @@ float Game::getPowerTimeLeft() {
   float t = 0.f;
   registry.view<TagPacman, Powered>().each([&](auto, auto &p) { t = p.timer; });
   return t;
+}
+
+void Game::handleInitialInput(sf::Keyboard::Key key) {
+  if (status != GameStatus::EnterInitials)
+    return;
+
+  // letter keys
+  if (key >= sf::Keyboard::Key::A && key <= sf::Keyboard::Key::Z) {
+    if ((int)initialsInput.size() < 3) {
+      initialsInput += (char)('A' + (int)key - (int)sf::Keyboard::Key::A);
+    }
+    return;
+  }
+
+  // backspace
+  if (key == sf::Keyboard::Key::Backspace) {
+    if (!initialsInput.empty())
+      initialsInput.pop_back();
+    return;
+  }
+
+  // confirm
+  if (key == sf::Keyboard::Key::Enter) {
+    if (initialsInput.empty())
+      initialsInput = "???";
+    while ((int)initialsInput.size() < 3)
+      initialsInput += ' ';
+    leaderboard.insert(initialsInput, score, level);
+    initialsInput = "";
+    leaderboardChecked = false;
+    status = GameStatus::Leaderboard;
+    return;
+  }
 }

@@ -243,6 +243,8 @@ void RenderSystem::drawStartScreen(int highScore,
                    theme.subtitleColor, 160.f);
   drawCenteredText(sf::String(L"Press E to open Map Editor"), 13,
                    theme.hudTextColor, 185.f);
+  drawCenteredText(sf::String(L"Press L to view leaderboard"), 13,
+                   theme.hudTextColor, 215.f);
 }
 void RenderSystem::drawGameOver(int score, int highScore) {
   drawCenteredText(sf::String(L"GAME OVER"), 32, theme.gameOverColor, -80.f);
@@ -277,4 +279,116 @@ void RenderSystem::drawPauseScreen() {
                    20.f);
   drawCenteredText(sf::String(L"Press ESC to quit"), 16, theme.subtitleColor,
                    55.f);
+}
+
+void RenderSystem::drawInitialEntry(const std::string &initials, int score,
+                                    const Leaderboard &leaderboard) {
+  // overlay
+  sf::RectangleShape overlay(
+      sf::Vector2f((float)Config::WINDOW_W, (float)Config::WINDOW_H));
+  overlay.setFillColor(sf::Color(0, 0, 0, 200));
+  overlay.setPosition(sf::Vector2f(0, 0));
+  window.draw(overlay);
+
+  drawCenteredText(sf::String(L"NEW HIGH SCORE!"), 28, theme.titleColor,
+                   -120.f);
+  drawCenteredText(sf::String(L"Score: " + std::to_wstring(score)), 20,
+                   theme.subtitleColor, -80.f);
+  drawCenteredText(sf::String(L"Enter your initials:"), 18, theme.hudTextColor,
+                   -40.f);
+
+  // initials display — show 3 slots
+  std::wstring slots;
+  for (int i = 0; i < 3; i++) {
+    if (i < (int)initials.size())
+      slots += (wchar_t)initials[i];
+    else
+      slots += L'_';
+    if (i < 2)
+      slots += L' ';
+  }
+
+  drawCenteredText(sf::String(slots), 40, theme.promptColor, 10.f);
+  drawCenteredText(
+      sf::String(L"Type 3 letters   BACKSPACE to delete   ENTER to confirm"),
+      13, theme.subtitleColor, 70.f);
+
+  // show current top 3 for context
+  drawCenteredText(sf::String(L"Current Top 3:"), 14, theme.hudTextColor,
+                   110.f);
+  auto &entries = leaderboard.getEntries();
+  for (int i = 0; i < std::min(3, (int)entries.size()); i++) {
+    std::wstring line =
+        std::to_wstring(i + 1) + L". " +
+        std::wstring(entries[i].name.begin(), entries[i].name.end()) + L"  " +
+        std::to_wstring(entries[i].score);
+    drawCenteredText(sf::String(line), 14, theme.subtitleColor,
+                     135.f + i * 22.f);
+  }
+}
+
+void RenderSystem::drawLeaderboard(const Leaderboard &lb, int currentScore) {
+  // background
+  sf::RectangleShape bg(
+      sf::Vector2f((float)Config::WINDOW_W, (float)Config::WINDOW_H));
+  bg.setFillColor(theme.backgroundColor);
+  bg.setPosition(sf::Vector2f(0, 0));
+  window.draw(bg);
+
+  // panel
+  sf::RectangleShape panel(
+      sf::Vector2f(Config::WINDOW_W - 60.f, Config::WINDOW_H - 80.f));
+  panel.setFillColor(theme.hudPanelColor);
+  panel.setPosition(sf::Vector2f(30.f, 40.f));
+  window.draw(panel);
+
+  drawCenteredText(sf::String(L"HIGH SCORES"), 28, theme.titleColor, -160.f);
+
+  // header
+  float startY = -120.f;
+  drawCenteredText(sf::String(L"RANK   NAME   SCORE      LEVEL"), 14,
+                   theme.hudHighScoreColor, startY);
+  startY += 28.f;
+
+  // divider
+  drawCenteredText(sf::String(std::wstring(36, L'─')), 14, theme.subtitleColor,
+                   startY);
+  startY += 24.f;
+
+  auto &entries = lb.getEntries();
+  if (entries.empty()) {
+    drawCenteredText(sf::String(L"No scores yet — play a game!"), 16,
+                     theme.subtitleColor, startY);
+  } else {
+    for (int i = 0; i < (int)entries.size(); i++) {
+      std::wstring rank = std::to_wstring(i + 1);
+      while (rank.size() < 2)
+        rank = L" " + rank;
+
+      std::wstring name(entries[i].name.begin(), entries[i].name.end());
+      while (name.size() < 3)
+        name += L' ';
+
+      std::wstring scoreStr = std::to_wstring(entries[i].score);
+      while (scoreStr.size() < 8)
+        scoreStr = L" " + scoreStr;
+
+      std::wstring lvlStr = std::to_wstring(entries[i].level);
+
+      std::wstring line =
+          rank + L".   " + name + L"   " + scoreStr + L"   LVL " + lvlStr;
+
+      // highlight current score
+      bool isCurrent = (entries[i].score == currentScore);
+      sf::Color col = isCurrent ? theme.promptColor : theme.hudTextColor;
+      if (i == 0)
+        col = theme.hudHighScoreColor; // gold for #1
+
+      drawCenteredText(sf::String(line), 16, col, startY);
+      startY += 26.f;
+    }
+  }
+
+  drawCenteredText(sf::String(L"Press ESC or ENTER to return"), 14,
+                   theme.subtitleColor, 160.f);
 }

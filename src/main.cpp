@@ -78,6 +78,13 @@ int main() {
     if (status == GameStatus::StartScreen) {
       renderer.drawStartScreen(game.getHighScore(), game.getThemes(),
                                game.getSelectedThemeIndex());
+    } else if (status == GameStatus::EnterInitials) {
+      renderer.drawMap(game.getMap());
+      renderer.drawEntities(game.getRegistry(), dt);
+      renderer.drawInitialEntry(game.getInitialsInput(), game.getScore(),
+                                game.getLeaderboard());
+    } else if (status == GameStatus::Leaderboard) {
+      renderer.drawLeaderboard(game.getLeaderboard(), game.getScore());
     } else {
       auto &registry = game.getRegistry();
 
