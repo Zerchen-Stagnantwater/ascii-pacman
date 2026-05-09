@@ -18,6 +18,7 @@ add_executable(pacman
     src/map/Map.cpp
     src/map/MapLoader.cpp
     src/game/Game.cpp
+    src/core/ThemeLoader.cpp
     src/systems/MovementSystem.cpp
     src/systems/RenderSystem.cpp
     src/systems/AISystem.cpp
@@ -25,6 +26,7 @@ add_executable(pacman
     src/systems/InputSystem.cpp
     src/systems/AnimationSystem.cpp
     src/systems/AudioSystem.cpp
+
 )
 
 target_include_directories(pacman PRIVATE src)

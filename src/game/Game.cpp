@@ -2,6 +2,7 @@
 #include "../core/Constants.hpp"
 #include "../map/MapLoader.hpp"
 #include "core/Components.hpp"
+#include "core/ThemeLoader.hpp"
 #include <SFML/Window/Keyboard.hpp>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -11,6 +12,13 @@ using json = nlohmann::json;
 Game::Game() {
   loadHighScore();
   audio.load("assets");
+  themes = ThemeLoader::loadAll("assets/themes");
+  if (themes.empty()) {
+    themes.push_back(ThemeLoader::classic());
+    themes.push_back(ThemeLoader::midnight());
+    themes.push_back(ThemeLoader::retro());
+  }
+  currentTheme = themes[0];
   try {
     auto data = MapLoader::load("assets/maps/classic.txt");
     map.load(data.layout);
@@ -52,6 +60,15 @@ float Game::pacmanSpeed() const {
 float Game::ghostSpeed() const {
   return std::max(Config::GHOST_MAX_SPEED,
                   Config::GHOST_SPEED - (level - 1) * Config::SPEED_SCALE);
+}
+void Game::nextTheme() {
+  selectedThemeIndex = (selectedThemeIndex + 1) % themes.size();
+  currentTheme = themes[selectedThemeIndex];
+}
+void Game::prevTheme() {
+  selectedThemeIndex =
+      ((selectedThemeIndex - 1) + themes.size()) % themes.size();
+  currentTheme = themes[selectedThemeIndex];
 }
 
 void Game::nextLevel() {
@@ -130,7 +147,7 @@ void Game::spawnPacman() {
   registry.emplace<Position>(e, spawns.pacmanRow, spawns.pacmanCol);
   registry.emplace<Velocity>(e, Direction::None, Direction::None, pacmanSpeed(),
                              0.f);
-  registry.emplace<Renderable>(e, L'C', sf::Color::Yellow);
+  registry.emplace<Renderable>(e, L'C', currentTheme.pacmanColor);
   registry.emplace<PlayerInput>(e, PlayerInput::Scheme::Arrows);
   registry.emplace<Animated>(e, 0.f, true);
   registry.emplace<TagPacman>(e);
@@ -149,13 +166,13 @@ void Game::spawnGhosts() {
 
   std::vector<GhostDef> defs = {
       {spawns.blinkyRow, spawns.blinkyCol, spawns.blinkyRow, spawns.blinkyCol,
-       L'M', sf::Color(255, 0, 0), GhostPersonality::Blinky, 0, 25, 0.f},
+       L'M', currentTheme.blinkyColor, GhostPersonality::Blinky, 0, 25, 0.f},
       {spawns.pinkyRow, spawns.pinkyCol, spawns.pinkyRow, spawns.pinkyCol, L'M',
-       sf::Color(255, 184, 255), GhostPersonality::Pinky, 0, 2, 3.f},
+       currentTheme.pinkyColor, GhostPersonality::Pinky, 0, 2, 3.f},
       {spawns.inkyRow, spawns.inkyCol, spawns.inkyRow, spawns.inkyCol, L'M',
-       sf::Color(0, 255, 255), GhostPersonality::Inky, 29, 25, 6.f},
+       currentTheme.inkyColor, GhostPersonality::Inky, 29, 25, 6.f},
       {spawns.clydeRow, spawns.clydeCol, spawns.clydeRow, spawns.clydeCol, L'M',
-       sf::Color(255, 184, 82), GhostPersonality::Clyde, 29, 2, 9.f},
+       currentTheme.clydeColor, GhostPersonality::Clyde, 29, 2, 9.f},
   };
 
   for (auto &d : defs) {
@@ -186,7 +203,8 @@ void Game::spawnDots() {
             cell == Cell::Pellet);
         registry.emplace<Renderable>(
             e, cell == Cell::Pellet ? L'\u25CF' : L'\u00B7',
-            sf::Color(200, 200, 200));
+            cell == Cell::Pellet ? currentTheme.pelletColor
+                                 : currentTheme.dotColor);
         registry.emplace<TagDot>(e);
         if (cell == Cell::Pellet) {
           registry.emplace<Pulsing>(e);
@@ -233,8 +251,15 @@ void Game::handleInput(sf::Keyboard::Key key, bool pressed) {
   if (!pressed)
     return;
   if (status == GameStatus::StartScreen) {
-    if (key == sf::Keyboard::Key::Enter)
+    if (key == sf::Keyboard::Key::Enter) {
+      currentTheme = themes[selectedThemeIndex];
       reset();
+      return;
+    }
+    if (key == sf::Keyboard::Key::Left)
+      prevTheme();
+    if (key == sf::Keyboard::Key::Right)
+      nextTheme();
     return;
   }
 

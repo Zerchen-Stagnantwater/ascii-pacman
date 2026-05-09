@@ -44,6 +44,9 @@ struct GhostAI {
   int scatterCol = 0;
 };
 
+struct FrightenedWarning {
+}; // tag — set by AnimationSystem when power is about to expire
+
 // Controls ghost house exit timing
 struct GhostHouse {
   float exitDelay; // seconds before leaving house

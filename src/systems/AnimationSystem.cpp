@@ -76,31 +76,21 @@ void AnimationSystem::update(entt::registry &registry, float dt,
   // Ghost power warning flash
   bool warning =
       powerTimeLeft > 0.f && powerTimeLeft <= Config::POWER_WARNING_TIME;
-  static float warnTimer = 0.f;
-  static bool warnBright = true;
-  if (warning) {
-    warnTimer += dt;
-    if (warnTimer >= 0.2f) {
-      warnTimer = 0.f;
-      warnBright = !warnBright;
-    }
-  } else {
-    warnTimer = 0.f;
-    warnBright = true;
-  }
 
-  registry.view<GhostAI, Renderable>().each(
-      [&](auto entity, auto &ai, auto &render) {
-        if (ai.mode != GhostMode::Frightened) {
-          if (registry.all_of<OriginalColor>(entity))
-            render.color = registry.get<OriginalColor>(entity).color;
-          return;
-        }
-        if (registry.all_of<Flashing>(entity))
-          return;
-        render.color =
-            warning && !warnBright ? sf::Color::White : sf::Color(0, 0, 200);
-      });
+  registry.view<GhostAI>().each([&](auto entity, auto &ai) {
+    if (ai.mode != GhostMode::Frightened) {
+      if (registry.all_of<FrightenedWarning>(entity))
+        registry.remove<FrightenedWarning>(entity);
+      return;
+    }
+    if (warning) {
+      if (!registry.all_of<FrightenedWarning>(entity))
+        registry.emplace<FrightenedWarning>(entity);
+    } else {
+      if (registry.all_of<FrightenedWarning>(entity))
+        registry.remove<FrightenedWarning>(entity);
+    }
+  });
 
   // Ghost death flash
   registry.view<Flashing>().each([&](auto entity, auto &flash) {

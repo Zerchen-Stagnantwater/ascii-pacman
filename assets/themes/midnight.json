@@ -1,0 +1,118 @@
+{
+  "name": "Midnight",
+  "backgroundColor": [
+    5,
+    0,
+    20
+  ],
+  "wallColor": [
+    120,
+    0,
+    200
+  ],
+  "pacmanColor": [
+    0,
+    255,
+    255
+  ],
+  "dotColor": [
+    150,
+    100,
+    200
+  ],
+  "pelletColor": [
+    200,
+    150,
+    255
+  ],
+  "blinkyColor": [
+    255,
+    50,
+    100
+  ],
+  "pinkyColor": [
+    255,
+    100,
+    200
+  ],
+  "inkyColor": [
+    100,
+    200,
+    255
+  ],
+  "clydeColor": [
+    255,
+    150,
+    50
+  ],
+  "frightenedColor": [
+    80,
+    0,
+    120
+  ],
+  "frightenedWarnColor": [
+    200,
+    100,
+    255
+  ],
+  "deadGhostColor": [
+    100,
+    50,
+    150
+  ],
+  "hudPanelColor": [
+    10,
+    0,
+    30
+  ],
+  "hudTextColor": [
+    200,
+    150,
+    255
+  ],
+  "hudScoreColor": [
+    200,
+    150,
+    255
+  ],
+  "hudHighScoreColor": [
+    255,
+    200,
+    100
+  ],
+  "hudHeartColor": [
+    255,
+    50,
+    150
+  ],
+  "hudLevelColor": [
+    150,
+    100,
+    255
+  ],
+  "titleColor": [
+    200,
+    100,
+    255
+  ],
+  "subtitleColor": [
+    150,
+    100,
+    200
+  ],
+  "promptColor": [
+    0,
+    255,
+    255
+  ],
+  "gameOverColor": [
+    255,
+    50,
+    100
+  ],
+  "winColor": [
+    200,
+    100,
+    255
+  ]
+}

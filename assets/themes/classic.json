@@ -1,0 +1,118 @@
+{
+  "name": "Classic",
+  "backgroundColor": [
+    0,
+    0,
+    0
+  ],
+  "wallColor": [
+    0,
+    100,
+    255
+  ],
+  "pacmanColor": [
+    255,
+    255,
+    0
+  ],
+  "dotColor": [
+    200,
+    200,
+    200
+  ],
+  "pelletColor": [
+    255,
+    255,
+    255
+  ],
+  "blinkyColor": [
+    255,
+    0,
+    0
+  ],
+  "pinkyColor": [
+    255,
+    184,
+    255
+  ],
+  "inkyColor": [
+    0,
+    255,
+    255
+  ],
+  "clydeColor": [
+    255,
+    184,
+    82
+  ],
+  "frightenedColor": [
+    0,
+    0,
+    200
+  ],
+  "frightenedWarnColor": [
+    255,
+    255,
+    255
+  ],
+  "deadGhostColor": [
+    100,
+    180,
+    255
+  ],
+  "hudPanelColor": [
+    20,
+    20,
+    40
+  ],
+  "hudTextColor": [
+    255,
+    255,
+    255
+  ],
+  "hudScoreColor": [
+    255,
+    255,
+    255
+  ],
+  "hudHighScoreColor": [
+    255,
+    255,
+    0
+  ],
+  "hudHeartColor": [
+    255,
+    0,
+    0
+  ],
+  "hudLevelColor": [
+    150,
+    150,
+    255
+  ],
+  "titleColor": [
+    255,
+    255,
+    0
+  ],
+  "subtitleColor": [
+    255,
+    255,
+    255
+  ],
+  "promptColor": [
+    0,
+    255,
+    255
+  ],
+  "gameOverColor": [
+    255,
+    0,
+    0
+  ],
+  "winColor": [
+    255,
+    255,
+    0
+  ]
+}

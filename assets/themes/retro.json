@@ -1,0 +1,118 @@
+{
+  "name": "Retro",
+  "backgroundColor": [
+    0,
+    10,
+    0
+  ],
+  "wallColor": [
+    0,
+    200,
+    0
+  ],
+  "pacmanColor": [
+    255,
+    255,
+    255
+  ],
+  "dotColor": [
+    0,
+    150,
+    0
+  ],
+  "pelletColor": [
+    0,
+    255,
+    0
+  ],
+  "blinkyColor": [
+    0,
+    220,
+    0
+  ],
+  "pinkyColor": [
+    100,
+    255,
+    100
+  ],
+  "inkyColor": [
+    0,
+    180,
+    100
+  ],
+  "clydeColor": [
+    150,
+    255,
+    50
+  ],
+  "frightenedColor": [
+    0,
+    80,
+    0
+  ],
+  "frightenedWarnColor": [
+    0,
+    255,
+    0
+  ],
+  "deadGhostColor": [
+    0,
+    100,
+    0
+  ],
+  "hudPanelColor": [
+    0,
+    20,
+    0
+  ],
+  "hudTextColor": [
+    0,
+    200,
+    0
+  ],
+  "hudScoreColor": [
+    0,
+    200,
+    0
+  ],
+  "hudHighScoreColor": [
+    0,
+    255,
+    0
+  ],
+  "hudHeartColor": [
+    0,
+    200,
+    0
+  ],
+  "hudLevelColor": [
+    0,
+    180,
+    0
+  ],
+  "titleColor": [
+    0,
+    255,
+    0
+  ],
+  "subtitleColor": [
+    0,
+    200,
+    0
+  ],
+  "promptColor": [
+    255,
+    255,
+    255
+  ],
+  "gameOverColor": [
+    0,
+    255,
+    0
+  ],
+  "winColor": [
+    0,
+    255,
+    0
+  ]
+}

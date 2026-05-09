@@ -1,6 +1,8 @@
 #pragma once
 #include "../core/Components.hpp"
 #include "../core/Direction.hpp"
+#include "../core/Theme.hpp"
+#include "../core/ThemeLoader.hpp"
 #include "../map/Map.hpp"
 #include "../map/MapLoader.hpp"
 #include "../systems/AudioSystem.hpp"
@@ -40,6 +42,12 @@ public:
   void addScore(int points) { score += points; }
   bool isRespawning() const { return status == GameStatus::Respawn; }
   AudioSystem &getAudio() { return audio; }
+  const Theme &getTheme() const { return currentTheme; }
+  void setTheme(const Theme &t) { currentTheme = t; }
+  const std::vector<Theme> &getThemes() const { return themes; }
+  int getSelectedThemeIndex() const { return selectedThemeIndex; }
+  void nextTheme();
+  void prevTheme();
 
 private:
   entt::registry registry;
@@ -61,6 +69,9 @@ private:
   entt::entity countdownEntity = entt::null;
   GameStatus prePauseStatus = GameStatus::Playing;
   AudioSystem audio;
+  std::vector<Theme> themes;
+  Theme currentTheme;
+  int selectedThemeIndex = 0;
 
   void initEntities();
   void spawnPacman();

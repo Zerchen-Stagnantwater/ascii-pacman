@@ -29,37 +29,38 @@ int main() {
         window.close();
       if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
         game.handleInput(key->code, true);
-        if (key->code == sf::Keyboard::Key::M) {
+        if (key->code == sf::Keyboard::Key::M)
           game.getAudio().setMuted(!game.getAudio().isMuted());
-        }
       }
     }
 
     game.update(dt);
 
-    window.clear(sf::Color::Black);
-
+    // sync theme every frame
+    renderer.setTheme(game.getTheme());
     GameStatus status = game.getStatus();
 
+    window.clear(game.getTheme().backgroundColor);
+
     if (status == GameStatus::StartScreen) {
-      renderer.drawStartScreen(game.getHighScore());
+      renderer.drawStartScreen(game.getHighScore(), game.getThemes(),
+                               game.getSelectedThemeIndex());
     } else {
       auto &registry = game.getRegistry();
-      if (status == GameStatus::Playing || status == GameStatus::Respawn) {
-        if (status == GameStatus::Playing) {
 
-          MovementSystem::update(registry, game.getMap(), dt);
-          AISystem::update(registry, game.getMap(), dt);
-          int earned = CollisionSystem::update(
-              registry, const_cast<Map &>(game.getMap()), game.getGhostCombo(),
-              game.getAudio());
-          game.addScore(earned);
-        }
-        AnimationSystem::update(registry, dt, game.getPowerTimeLeft());
+      if (status == GameStatus::Playing) {
+        MovementSystem::update(registry, game.getMap(), dt);
+        AISystem::update(registry, game.getMap(), dt);
+        int earned = CollisionSystem::update(
+            registry, game.getMapMut(), game.getGhostCombo(), game.getAudio());
+        game.addScore(earned);
       }
 
+      if (status == GameStatus::Playing || status == GameStatus::Respawn)
+        AnimationSystem::update(registry, dt, game.getPowerTimeLeft());
+
       renderer.drawMap(game.getMap());
-      renderer.drawEntities(registry);
+      renderer.drawEntities(registry, dt);
 
       bool powered = false;
       registry.view<TagPacman, Powered>().each(
@@ -67,16 +68,17 @@ int main() {
       renderer.drawHUD(game.getScore(), game.getHighScore(), game.getLives(),
                        powered, game.getCountdown(), game.isRespawning(),
                        game.getLevel());
+
       if (status == GameStatus::Paused)
         renderer.drawPauseScreen();
+      if (status == GameStatus::GameOver)
+        renderer.drawGameOver(game.getScore(), game.getHighScore());
       if (status == GameStatus::Win)
         renderer.drawWinScreen(game.getScore(), game.getHighScore(),
                                game.getLevel());
-      if (status == GameStatus::GameOver)
-        renderer.drawGameOver(game.getScore(), game.getHighScore());
     }
+
     window.display();
   }
-
   return 0;
 }
