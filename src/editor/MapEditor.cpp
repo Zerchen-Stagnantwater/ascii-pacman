@@ -93,6 +93,11 @@ void MapEditor::handleKey(sf::Keyboard::Key key) {
     return;
   }
 
+  if (key == sf::Keyboard::Key::H) {
+    showHelp = !showHelp;
+    return;
+  }
+
   if (key == sf::Keyboard::Key::S) {
     save();
     return;

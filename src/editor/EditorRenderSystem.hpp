@@ -13,6 +13,7 @@ private:
   sf::RenderWindow &window;
   sf::Font font;
 
+  void drawHelp(const Theme &theme);
   void drawGrid(const MapEditor &editor, const Theme &theme);
   void drawToolbar(const MapEditor &editor, const Theme &theme);
   void drawMessage(const std::string &msg, const Theme &theme);

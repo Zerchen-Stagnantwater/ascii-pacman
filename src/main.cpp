@@ -30,6 +30,33 @@ int main() {
   while (window.isOpen()) {
     float dt = clock.restart().asSeconds();
 
+    if (game.getStatus() == GameStatus::MapEditor) {
+      // handle editor input
+      while (const std::optional event = window.pollEvent()) {
+        if (event->is<sf::Event::Closed>())
+          window.close();
+        if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
+          mapEditor.handleKey(key->code);
+        }
+        if (const auto *click = event->getIf<sf::Event::MouseButtonPressed>()) {
+          bool right = click->button == sf::Mouse::Button::Right;
+          mapEditor.handleMouseClick(click->position.x, click->position.y,
+                                     right);
+        }
+      }
+
+      mapEditor.update(dt);
+
+      if (mapEditor.wantsToQuit()) {
+        mapEditor = MapEditor(); // reset editor
+        game.exitEditor();
+      }
+
+      window.clear(sf::Color(20, 20, 20));
+      editorRenderer.draw(mapEditor, game.getTheme());
+      window.display();
+      continue; // skip normal game loop
+    }
     while (const std::optional event = window.pollEvent()) {
       if (event->is<sf::Event::Closed>())
         window.close();
@@ -60,35 +87,6 @@ int main() {
         int earned = CollisionSystem::update(
             registry, game.getMapMut(), game.getGhostCombo(), game.getAudio());
         game.addScore(earned);
-      }
-
-      if (status == GameStatus::MapEditor) {
-        // handle editor input
-        while (const std::optional event = window.pollEvent()) {
-          if (event->is<sf::Event::Closed>())
-            window.close();
-          if (const auto *key = event->getIf<sf::Event::KeyPressed>()) {
-            mapEditor.handleKey(key->code);
-          }
-          if (const auto *click =
-                  event->getIf<sf::Event::MouseButtonPressed>()) {
-            bool right = click->button == sf::Mouse::Button::Right;
-            mapEditor.handleMouseClick(click->position.x, click->position.y,
-                                       right);
-          }
-        }
-
-        mapEditor.update(dt);
-
-        if (mapEditor.wantsToQuit()) {
-          mapEditor = MapEditor(); // reset editor
-          game.exitEditor();
-        }
-
-        window.clear(sf::Color(20, 20, 20));
-        editorRenderer.draw(mapEditor, game.getTheme());
-        window.display();
-        continue; // skip normal game loop
       }
 
       if (status == GameStatus::Playing || status == GameStatus::Respawn)

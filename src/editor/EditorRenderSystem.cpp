@@ -173,9 +173,7 @@ void EditorRenderSystem::drawToolbar(const MapEditor &editor,
   window.draw(tileTxt);
 
   // hints right side
-  sf::Text hints(
-      font, "Tab=cycle  W/D/O/E=tile  1-5=spawn  S=save  ESC=quit  RMB=erase",
-      11);
+  sf::Text hints(font, "H=help  Tab=cycle  S=save  ESC=quit  RMB=erase", 11);
   hints.setFillColor(theme.subtitleColor);
   auto b = hints.getLocalBounds();
   hints.setPosition(sf::Vector2f(Config::WINDOW_W - b.size.x - 6, 12));
@@ -198,4 +196,90 @@ void EditorRenderSystem::draw(const MapEditor &editor, const Theme &theme) {
   drawGrid(editor, theme);
   drawToolbar(editor, theme);
   drawMessage(editor.getSaveMessage(), theme);
+  if (editor.showHelp)
+    drawHelp(theme);
+}
+
+void EditorRenderSystem::drawHelp(const Theme &theme) {
+  // dark overlay
+  sf::RectangleShape overlay(
+      sf::Vector2f((float)Config::WINDOW_W, (float)Config::WINDOW_H));
+  overlay.setFillColor(sf::Color(0, 0, 0, 210));
+  overlay.setPosition(sf::Vector2f(0, 0));
+  window.draw(overlay);
+
+  struct Line {
+    std::wstring key;
+    std::wstring desc;
+  };
+  std::vector<Line> lines = {
+      {L"LEFT CLICK", L"Place selected tile"},
+      {L"RIGHT CLICK", L"Erase tile"},
+      {L"Tab", L"Cycle through tile types"},
+      {L"W", L"Select Wall"},
+      {L"D", L"Select Dot"},
+      {L"O", L"Select Power Pellet"},
+      {L"E", L"Select Eraser"},
+      {L"1", L"Place Pacman spawn (P)"},
+      {L"2", L"Place Blinky spawn (B)"},
+      {L"3", L"Place Pinky spawn (p)"},
+      {L"4", L"Place Inky spawn (i)"},
+      {L"5", L"Place Clyde spawn (c)"},
+      {L"S", L"Save map to assets/maps/"},
+      {L"H", L"Toggle this help screen"},
+      {L"ESC", L"Quit editor"},
+  };
+
+  // title
+  sf::Text title(font, sf::String(L"MAP EDITOR — CONTROLS"), 22);
+  title.setFillColor(theme.titleColor);
+  auto tb = title.getLocalBounds();
+  title.setPosition(
+      sf::Vector2f(Config::WINDOW_W / 2.f - tb.size.x / 2.f, 60.f));
+  window.draw(title);
+
+  // divider
+  sf::Text div(font, sf::String(std::wstring(36, L'─')), 14);
+  div.setFillColor(theme.subtitleColor);
+  auto db = div.getLocalBounds();
+  div.setPosition(sf::Vector2f(Config::WINDOW_W / 2.f - db.size.x / 2.f, 95.f));
+  window.draw(div);
+
+  float startY = 120.f;
+  float lineH = 22.f;
+  float keyX = Config::WINDOW_W / 2.f - 200.f;
+  float descX = Config::WINDOW_W / 2.f - 20.f;
+
+  for (auto &line : lines) {
+    sf::Text keyTxt(font, sf::String(line.key), 14);
+    keyTxt.setFillColor(theme.promptColor);
+    keyTxt.setPosition(sf::Vector2f(keyX, startY));
+    window.draw(keyTxt);
+
+    sf::Text descTxt(font, sf::String(line.desc), 14);
+    descTxt.setFillColor(theme.hudTextColor);
+    descTxt.setPosition(sf::Vector2f(descX, startY));
+    window.draw(descTxt);
+
+    startY += lineH;
+  }
+
+  // footer
+  sf::Text footer(font, sf::String(L"Press H to close this help"), 13);
+  footer.setFillColor(theme.subtitleColor);
+  auto fb = footer.getLocalBounds();
+  footer.setPosition(
+      sf::Vector2f(Config::WINDOW_W / 2.f - fb.size.x / 2.f, startY + 20.f));
+  window.draw(footer);
+
+  // map tip
+  sf::Text tip(font,
+               sf::String(L"Tip: map must be 28 cols x 31 rows with at least "
+                          L"one dot and one P spawn to save"),
+               11);
+  tip.setFillColor(sf::Color(150, 150, 150));
+  auto tipb = tip.getLocalBounds();
+  tip.setPosition(
+      sf::Vector2f(Config::WINDOW_W / 2.f - tipb.size.x / 2.f, startY + 45.f));
+  window.draw(tip);
 }

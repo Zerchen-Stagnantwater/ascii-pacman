@@ -19,7 +19,7 @@ enum class TileType {
 class MapEditor {
 public:
   MapEditor();
-
+  bool showHelp = true; // show on open by default
   void handleMouseClick(int mouseX, int mouseY, bool rightClick);
   void handleKey(sf::Keyboard::Key key);
   void update(float dt);
